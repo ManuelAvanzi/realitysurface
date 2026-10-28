@@ -4,8 +4,10 @@
 // x verso destra, y verso l'alto della pagina, z verso chi guarda (fuori dalla carta).
 //
 // Elemento: { id, nome, tipo, pos:[x,y,z], rot:[gradi x,y,z], scala:[x,y,z], anim:{...}, ...proprietà per tipo }
-// Tipi: glb {src, normalizza}, sfera {src, colore, raggio}, testo {testo, colore, sfondo, altezza}, immagine {src, larghezza}
-// Animazioni: anim.rotazione {asse:'x'|'y'|'z', giri (al minuto)}, anim.fluttua {ampiezza, periodo}, anim.orbita {raggio, periodo, asse}
+// Tipi: glb {src, normalizza, clip}, sfera {src, colore, raggio}, testo {testo, colore, sfondo, altezza},
+//       immagine {src, larghezza}, personaggio {colore, pelle, altezza}, blocco {colore, dim:[x,y,z]}
+// Animazioni: anim.rotazione {asse, giri}, anim.fluttua {ampiezza, periodo}, anim.orbita {raggio, periodo, asse},
+//             anim.percorso {punti:[[x,y,z],...], velocita, loop, orienta, offsetRot}  (parte da pos, passa per i punti)
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -16,19 +18,24 @@ const cacheGltf = new Map();
 
 export const TIPI_ELEMENTO = {
   glb: 'Modello 3D (GLB)',
+  personaggio: 'Personaggio (NPC)',
   sfera: 'Sfera con texture',
+  blocco: 'Blocco / volume',
   testo: 'Testo',
   immagine: 'Immagine',
 };
 
 export function nuovoId() { return Math.random().toString(36).slice(2, 9); }
 
-export function elementoDefault(tipo) {
+export function elementoDefault(tipo, scala = 1) {
   const base = { id: nuovoId(), tipo, nome: TIPI_ELEMENTO[tipo] || tipo, pos: [0, 0, 0.05], rot: [0, 0, 0], scala: [1, 1, 1], anim: {} };
-  if (tipo === 'glb') return { ...base, src: '', normalizza: true, scala: [0.3, 0.3, 0.3], pos: [0, 0, 0.15] };
-  if (tipo === 'sfera') return { ...base, src: '', colore: '#c9622b', raggio: 0.18, pos: [0, 0, 0.22], anim: { rotazione: { asse: 'z', giri: 2 } } };
-  if (tipo === 'testo') return { ...base, testo: 'Testo', colore: '#ffffff', sfondo: '#1b1f2acc', altezza: 0.06, pos: [0, -0.3, 0.03] };
-  if (tipo === 'immagine') return { ...base, src: '', larghezza: 0.3, pos: [0, 0, 0.02] };
+  const s = (v) => +(v * scala).toFixed(3);
+  if (tipo === 'glb') return { ...base, src: '', normalizza: true, clip: '', scala: [s(0.3), s(0.3), s(0.3)], pos: [0, 0, s(0.15)] };
+  if (tipo === 'personaggio') return { ...base, nome: 'Personaggio', colore: '#3b82f6', pelle: '#f1c27d', altezza: s(0.12), pos: [0, 0, 0], anim: { percorso: { punti: [[s(0.25), 0, 0], [s(0.25), s(0.2), 0]], velocita: s(0.06), loop: true, orienta: true, offsetRot: 0 } } };
+  if (tipo === 'sfera') return { ...base, src: '', colore: '#c9622b', raggio: s(0.18), pos: [0, 0, s(0.22)], anim: { rotazione: { asse: 'z', giri: 2 } } };
+  if (tipo === 'blocco') return { ...base, nome: 'Blocco', colore: '#9ca3af', dim: [s(0.15), s(0.1), s(0.08)], pos: [0, 0, 0] };
+  if (tipo === 'testo') return { ...base, testo: 'Testo', colore: '#ffffff', sfondo: '#1b1f2acc', altezza: s(0.06), pos: [0, s(-0.3), s(0.03)] };
+  if (tipo === 'immagine') return { ...base, src: '', larghezza: s(0.3), pos: [0, 0, 0.02] };
   return base;
 }
 
@@ -63,8 +70,7 @@ function creaTesto(el) {
   c.width = Math.ceil(w); c.height = Math.ceil(h);
   if (el.sfondo && el.sfondo !== 'none') {
     ctx.fillStyle = el.sfondo;
-    const r = 24;
-    ctx.beginPath(); ctx.roundRect(0, 0, c.width, c.height, r); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(0, 0, c.width, c.height, 24); ctx.fill();
   }
   ctx.font = `600 ${fontPx}px Inter, system-ui, sans-serif`;
   ctx.fillStyle = el.colore || '#fff';
@@ -73,9 +79,43 @@ function creaTesto(el) {
   const alt = Number(el.altezza) || 0.06;
   const altTot = alt * righe.length + (pad * 2 / fontPx) * alt * 0.8;
   const larg = altTot * (c.width / c.height);
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(larg, altTot),
+  return new THREE.Mesh(new THREE.PlaneGeometry(larg, altTot),
     new THREE.MeshBasicMaterial({ map: texturaCanvas(c), transparent: true, side: THREE.DoubleSide }));
-  return mesh;
+}
+
+/** Omino procedurale: in piedi lungo z, guarda verso +x. Altezza totale = el.altezza. */
+function creaPersonaggio(el) {
+  const H = Number(el.altezza) || 0.12;
+  const g = new THREE.Group();
+  const matVest = new THREE.MeshStandardMaterial({ color: el.colore || '#3b82f6', roughness: 0.8 });
+  const matPelle = new THREE.MeshStandardMaterial({ color: el.pelle || '#f1c27d', roughness: 0.7 });
+  const matScuro = new THREE.MeshStandardMaterial({ color: '#1f2937', roughness: 0.9 });
+  const gambaH = H * 0.42, bustoH = H * 0.36, testaR = H * 0.11;
+  const gamba = (x) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.05, H * 0.045, gambaH, 10), matScuro);
+    m.geometry.translate(0, -gambaH / 2, 0); // perno in alto
+    const piv = new THREE.Group(); piv.add(m);
+    piv.position.set(0, x, gambaH); piv.rotation.x = Math.PI / 2; // cilindro y → z
+    return piv;
+  };
+  const gL = gamba(H * 0.07), gR = gamba(-H * 0.07);
+  const busto = new THREE.Mesh(new THREE.CapsuleGeometry(H * 0.11, bustoH - H * 0.22, 4, 10), matVest);
+  busto.rotation.x = Math.PI / 2; busto.position.z = gambaH + bustoH / 2;
+  const braccio = (y) => {
+    const m = new THREE.Mesh(new THREE.CapsuleGeometry(H * 0.035, bustoH * 0.6, 3, 8), matVest);
+    m.geometry.translate(0, -bustoH * 0.35, 0);
+    const piv = new THREE.Group(); piv.add(m);
+    piv.position.set(0, y, gambaH + bustoH * 0.9); piv.rotation.x = Math.PI / 2;
+    return piv;
+  };
+  const bL = braccio(H * 0.16), bR = braccio(-H * 0.16);
+  const testa = new THREE.Mesh(new THREE.SphereGeometry(testaR, 16, 12), matPelle);
+  testa.position.z = gambaH + bustoH + testaR * 0.9;
+  const naso = new THREE.Mesh(new THREE.SphereGeometry(testaR * 0.25, 8, 6), matPelle);
+  naso.position.set(testaR * 0.9, 0, testa.position.z); // indica il "davanti" (+x)
+  g.add(gL, gR, busto, bL, bR, testa, naso);
+  g.userData.arti = { gambe: [gL, gR], braccia: [bL, bR] };
+  return g;
 }
 
 async function creaContenuto(el) {
@@ -88,8 +128,15 @@ async function creaContenuto(el) {
       } catch (e) { console.warn('Texture non caricata', el.src, e); mat.color.set(el.colore || '#c9622b'); }
     }
     const m = new THREE.Mesh(new THREE.SphereGeometry(Number(el.raggio) || 0.18, 48, 32), mat);
-    // Asse polare della sfera lungo z (fuori dalla pagina): un pianeta appoggiato sul libro gira "in piano".
-    m.rotation.x = Math.PI / 2;
+    m.rotation.x = Math.PI / 2; // asse polare lungo z: un pianeta appoggiato sul libro gira "in piano"
+    const g = new THREE.Group(); g.add(m);
+    return g;
+  }
+  if (el.tipo === 'personaggio') return creaPersonaggio(el);
+  if (el.tipo === 'blocco') {
+    const d = (el.dim || [0.15, 0.1, 0.08]).map((v) => Number(v) || 0.05);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(d[0], d[1], d[2]), new THREE.MeshStandardMaterial({ color: el.colore || '#9ca3af', roughness: 0.9 }));
+    m.position.z = d[2] / 2; // appoggiato sulla pagina
     const g = new THREE.Group(); g.add(m);
     return g;
   }
@@ -121,12 +168,13 @@ async function creaContenuto(el) {
         modello.scale.setScalar(1 / max);
         // I GLB hanno y verso l'alto: li ruotiamo perché "in piedi" sulla pagina significhi lungo z.
         const wrap = new THREE.Group(); wrap.add(modello); wrap.rotation.x = Math.PI / 2;
-        wrap.position.z = 0; g.add(wrap);
+        g.add(wrap);
       } else g.add(modello);
-      g.userData.clips = gltf.animations;
+      g.userData.clips = gltf.animations || [];
       if (gltf.animations?.length) {
-        g.userData.mixer = new THREE.AnimationMixer(g);
-        gltf.animations.forEach((clip) => g.userData.mixer.clipAction(clip).play());
+        g.userData.mixer = new THREE.AnimationMixer(modello);
+        const scelte = el.clip ? gltf.animations.filter((c) => c.name === el.clip) : gltf.animations;
+        (scelte.length ? scelte : gltf.animations).forEach((clip) => g.userData.mixer.clipAction(clip).play());
       }
     } catch (e) { console.warn('GLB non caricato', el.src, e); g.add(segnaposto()); }
     return g;
@@ -182,6 +230,91 @@ export function pianoPagina(urlImmagine, w, h) {
 }
 
 /**
+ * Modello di riferimento del plastico (impostazioni.riferimento = GLB). Appoggiato sulla pagina, y-up → z-up,
+ * ingombro in pianta = impostazioni.larghezza (unità pagina). modo 'editor': fantasma trasparente;
+ * modo 'viewer': occlusore invisibile (scrive solo la profondità, così nasconde ciò che gli passa dietro).
+ */
+export async function costruisciRiferimento(imp = {}, modo = 'editor') {
+  if (!imp?.riferimento) return null;
+  const gltf = await loadGltf(urlAsset(imp.riferimento));
+  const modello = gltf.scene.clone(true);
+  const wrap = new THREE.Group(); wrap.add(modello); wrap.rotation.x = Math.PI / 2;
+  const box = new THREE.Box3().setFromObject(wrap);
+  const size = new THREE.Vector3(); box.getSize(size);
+  const pianta = Math.max(size.x, size.y) || 1;
+  const s = (Number(imp.larghezza) || 0.6) / pianta;
+  const centro = new THREE.Vector3(); box.getCenter(centro);
+  const g = new THREE.Group(); g.name = 'riferimento';
+  wrap.position.set(-centro.x * s, -centro.y * s, -box.min.z * s);
+  wrap.scale.setScalar(s); g.add(wrap);
+  g.position.set(Number(imp.offsetX) || 0, Number(imp.offsetY) || 0, 0);
+  g.rotation.z = THREE.MathUtils.degToRad(Number(imp.rotazione) || 0);
+  const mat = modo === 'viewer'
+    ? new THREE.MeshBasicMaterial({ colorWrite: false })
+    : new THREE.MeshBasicMaterial({ color: '#7dd3fc', transparent: true, opacity: 0.28, depthWrite: false });
+  g.traverse((o) => { if (o.isMesh) { o.material = mat; if (modo === 'viewer') o.renderOrder = -1; } });
+  return g;
+}
+
+// ---------- animazioni ----------
+function percorsoInfo(el) {
+  const p = el.anim?.percorso; if (!p || !p.punti?.length) return null;
+  const pts = [(el.pos || [0, 0, 0]).map(Number), ...p.punti.map((q) => q.map(Number))];
+  if (p.loop !== false) pts.push(pts[0]);
+  const seg = []; let tot = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    seg.push({ a, b, l, da: tot }); tot += l;
+  }
+  return { seg, tot, vel: Number(p.velocita) || 0.06, loop: p.loop !== false, orienta: p.orienta !== false, offset: THREE.MathUtils.degToRad(Number(p.offsetRot) || 0) };
+}
+
+/** Applica le animazioni di un elemento per il frame corrente. basePos = posizione di partenza (el.pos). */
+export function animaElemento(obj, dt, t, basePos) {
+  const el = obj.userData.elemento;
+  const cont = obj.getObjectByName('contenuto');
+  const a = el.anim || {};
+  if (a.rotazione && cont) {
+    const vel = (Number(a.rotazione.giri) || 0) * Math.PI * 2 / 60;
+    cont.rotation[a.rotazione.asse || 'z'] += vel * dt;
+  }
+  const base = basePos || el.pos || [0, 0, 0];
+  let dx = 0, dy = 0, dz = 0, mosso = false;
+  if (a.fluttua) {
+    const per = Number(a.fluttua.periodo) || 3;
+    dz += (Number(a.fluttua.ampiezza) || 0.02) * Math.sin(t * Math.PI * 2 / per); mosso = true;
+  }
+  if (a.orbita) {
+    const per = Number(a.orbita.periodo) || 8, r = Number(a.orbita.raggio) || 0.3;
+    const ang = t * Math.PI * 2 / per;
+    if ((a.orbita.asse || 'z') === 'z') { dx += Math.cos(ang) * r; dy += Math.sin(ang) * r; }
+    else { dx += Math.cos(ang) * r; dz += Math.sin(ang) * r; }
+    mosso = true;
+  }
+  let cammina = false;
+  const pi = percorsoInfo(el);
+  if (pi && pi.tot > 0) {
+    let s = t * pi.vel;
+    if (pi.loop) s %= pi.tot; else s = Math.min(s, pi.tot);
+    const sg = pi.seg.find((x) => s <= x.da + x.l) || pi.seg[pi.seg.length - 1];
+    const k = sg.l ? (s - sg.da) / sg.l : 0;
+    const px = sg.a[0] + (sg.b[0] - sg.a[0]) * k, py = sg.a[1] + (sg.b[1] - sg.a[1]) * k, pz = sg.a[2] + (sg.b[2] - sg.a[2]) * k;
+    obj.position.set(px + dx, py + dy, pz + dz);
+    if (pi.orienta && sg.l) obj.rotation.z = Math.atan2(sg.b[1] - sg.a[1], sg.b[0] - sg.a[0]) + pi.offset;
+    cammina = pi.loop || s < pi.tot;
+  } else if (mosso) obj.position.set(Number(base[0]) + dx, Number(base[1]) + dy, Number(base[2]) + dz);
+  // omino: gambe e braccia oscillano quando cammina
+  const arti = cont?.userData.arti;
+  if (arti) {
+    const sw = cammina ? Math.sin(t * 9) * 0.55 : 0;
+    arti.gambe[0].rotation.y = sw; arti.gambe[1].rotation.y = -sw;
+    arti.braccia[0].rotation.y = -sw * 0.8; arti.braccia[1].rotation.y = sw * 0.8;
+  }
+  if (cont?.userData.mixer) cont.userData.mixer.update(dt);
+}
+
+/**
  * Costruisce tutta la scena di una pagina dentro `gruppo`.
  * Ritorna { oggetti: Map(id → Object3D), aggiorna(dt, t) } dove aggiorna applica le animazioni.
  */
@@ -192,29 +325,7 @@ export async function costruisciScena(scena, gruppo) {
   creati.forEach((obj, i) => { gruppo.add(obj); oggetti.set(elementi[i].id, obj); });
   const basePos = new Map(elementi.map((el) => [el.id, [...(el.pos || [0, 0, 0])]]));
   function aggiorna(dt, t) {
-    for (const [id, obj] of oggetti) {
-      const el = obj.userData.elemento;
-      const cont = obj.getObjectByName('contenuto');
-      const a = el.anim || {};
-      if (a.rotazione && cont) {
-        const vel = (Number(a.rotazione.giri) || 0) * Math.PI * 2 / 60;
-        cont.rotation[a.rotazione.asse || 'z'] += vel * dt;
-      }
-      const base = basePos.get(id) || el.pos;
-      let dx = 0, dy = 0, dz = 0;
-      if (a.fluttua) {
-        const per = Number(a.fluttua.periodo) || 3;
-        dz += (Number(a.fluttua.ampiezza) || 0.02) * Math.sin(t * Math.PI * 2 / per);
-      }
-      if (a.orbita) {
-        const per = Number(a.orbita.periodo) || 8, r = Number(a.orbita.raggio) || 0.3;
-        const ang = t * Math.PI * 2 / per;
-        if ((a.orbita.asse || 'z') === 'z') { dx += Math.cos(ang) * r; dy += Math.sin(ang) * r; }
-        else { dx += Math.cos(ang) * r; dz += Math.sin(ang) * r; }
-      }
-      if (a.fluttua || a.orbita) obj.position.set(Number(base[0]) + dx, Number(base[1]) + dy, Number(base[2]) + dz);
-      if (cont?.userData.mixer) cont.userData.mixer.update(dt);
-    }
+    for (const [id, obj] of oggetti) animaElemento(obj, dt, t, basePos.get(id));
   }
   return { oggetti, aggiorna, basePos };
 }

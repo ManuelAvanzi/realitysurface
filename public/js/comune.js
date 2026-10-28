@@ -43,7 +43,7 @@ export function chipUtente(el, utente) {
   $('#btn-esci', el).addEventListener('click', async () => { await api('/api/auth/logout', { method: 'POST' }); location.href = '/login'; });
 }
 
-export const TIPI_ETICHETTA = { libro: 'Libro', biglietto: 'Biglietto da visita', brochure: 'Brochure', copertina: 'Copertina', poster: 'Poster', altro: 'Altro' };
+export const TIPI_ETICHETTA = { libro: 'Libro', biglietto: 'Biglietto da visita', brochure: 'Brochure', copertina: 'Copertina', poster: 'Poster', plastico: 'Plastico', altro: 'Altro' };
 
 /** Dimensioni di un File immagine. */
 export function dimensioniFile(file) {

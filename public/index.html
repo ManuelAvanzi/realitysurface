@@ -19,6 +19,7 @@
   .card.stampato { overflow: hidden; display: flex; flex-direction: column; }
   .cover { aspect-ratio: 4 / 3; background: #0b0d12 center / cover no-repeat; border-bottom: 1px solid var(--bordo); display: grid; place-items: center; color: #3b4252; position: relative; }
   .cover svg.ic { width: 42px; height: 42px; }
+  .cover[style] svg.ic { display: none; }
   .cover .stato { position: absolute; top: 10px; left: 10px; }
   .corpo { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
   .corpo h3 { font-size: 15px; }
@@ -30,10 +31,22 @@
   .azioni { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
   .azioni button, .azioni .btn { justify-content: center; }
   .vuoto { padding: 48px; text-align: center; color: var(--testo2); border: 1px dashed var(--bordo); border-radius: var(--raggio); }
-  .formati { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-  .formati button { padding: 4px 9px; font-size: 12px; }
-  .dialog-azioni { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
-  @media (max-width: 800px) { .passi-intro { grid-template-columns: 1fr 1fr; } }
+  dialog.larga { max-width: 760px; }
+  .template { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 10px; }
+  .tpl { flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; text-align: left; white-space: normal; }
+  .tpl svg.ic { width: 22px; height: 22px; color: var(--accento2); }
+  .tpl b { font-size: 13px; }
+  .tpl small { color: var(--testo2); font-size: 11px; }
+  .tpl.attivo { border-color: var(--accento); background: #ff590014; }
+  #tpl-desc p { margin: 4px 0; font-size: 13px; }
+  .dialog-azioni { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; align-items: center; }
+  .dialog-azioni label { margin: 0 auto 0 0; display: flex; align-items: center; gap: 6px; }
+  .dialog-azioni label input { width: auto; }
+  .demo-lista { display: grid; gap: 8px; margin-top: 8px; }
+  .demo-lista button { justify-content: flex-start; padding: 12px 14px; white-space: normal; text-align: left; }
+  .demo-lista b { display: block; }
+  .demo-lista small { color: var(--testo2); }
+  @media (max-width: 800px) { .passi-intro, .template { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -41,7 +54,7 @@
   <div class="logo"><span id="logo-ic"></span>REALITY<b>PAPER</b></div>
   <span class="muto piccolo">AR sopra la carta stampata</span>
   <div class="spazio"></div>
-  <button id="btn-demo" title="Crea un libro demo sui pianeti con 3 pagine pronte"></button>
+  <button id="btn-demo" title="Crea uno stampato dimostrativo già pronto"></button>
   <button class="primario" id="btn-nuovo"></button>
   <div id="utente" class="riga" style="flex:none"></div>
 </header>
@@ -50,20 +63,23 @@
   <div class="intro">
     <div>
       <h1>I tuoi stampati</h1>
-      <p>Uno “stampato” è un libro, un biglietto da visita, una brochure o una copertina. Ogni pagina ha un QR da stampare e una scena 3D che compare sopra la carta quando la inquadri col telefono.</p>
+      <p>Uno “stampato” è un libro, un biglietto da visita, una brochure, un poster o il basamento di un plastico. Ogni pagina ha un QR da stampare e una scena 3D che compare sopra la carta quando la inquadri col telefono.</p>
     </div>
   </div>
   <div class="passi-intro">
     <div class="card"><span class="num">1</span><div><b>Pagine</b><span>Carica le grafiche definitive di stampa.</span></div></div>
     <div class="card"><span class="num">2</span><div><b>Target</b><span>Compila il riconoscimento di ogni pagina.</span></div></div>
-    <div class="card"><span class="num">3</span><div><b>Contenuti</b><span>Posiziona modelli 3D, testi e immagini.</span></div></div>
+    <div class="card"><span class="num">3</span><div><b>Contenuti</b><span>Posiziona modelli 3D, personaggi, testi e immagini.</span></div></div>
     <div class="card"><span class="num">4</span><div><b>Pubblica</b><span>Attiva il viewer e scarica i QR.</span></div></div>
   </div>
   <div id="lista" class="griglia"></div>
 </main>
 
-<dialog id="dlg-nuovo">
+<dialog id="dlg-nuovo" class="larga">
   <h2>Nuovo stampato</h2>
+  <label>Scegli il template</label>
+  <div class="template" id="template"></div>
+  <div id="tpl-desc"></div>
   <label>Titolo</label>
   <input id="n-titolo" placeholder="Es. Il libro dei pianeti" autofocus>
   <div class="riga">
@@ -71,13 +87,23 @@
     <div><label>Larghezza (mm)</label><input id="n-w" type="number" value="210"></div>
     <div><label>Altezza (mm)</label><input id="n-h" type="number" value="297"></div>
   </div>
-  <div class="formati" id="formati"></div>
   <label>Descrizione (facoltativa)</label>
   <textarea id="n-desc" rows="2"></textarea>
   <div class="dialog-azioni">
+    <label><input type="checkbox" id="n-pagine" checked> Crea le pagine iniziali del template</label>
     <button id="n-annulla">Annulla</button>
     <button class="primario" id="n-crea">Crea e apri l'editor</button>
   </div>
+</dialog>
+
+<dialog id="dlg-demo">
+  <h2>Crea una demo</h2>
+  <p class="muto">Stampati già pronti per vedere il flusso completo: pagine generate, scene impostate, da compilare i target.</p>
+  <div class="demo-lista">
+    <button data-demo="pianeti"><span><b>Il libro dei pianeti</b><small>3 pagine di libro: Marte, Giove, Saturno con sfere animate, lune e anelli.</small></span></button>
+    <button data-demo="plastico"><span><b>Plastico del borgo</b><small>Basamento A3 con mappa del paese: edifici come volumi, 4 personaggi che camminano, etichette.</small></span></button>
+  </div>
+  <div class="dialog-azioni"><button id="demo-annulla">Chiudi</button></div>
 </dialog>
 
 <script type="module" src="/static/js/home.js"></script>

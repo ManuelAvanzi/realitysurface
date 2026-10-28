@@ -32,8 +32,9 @@ export const ctx = {
     const s = ctx.stampato; const n = s.pagine.length;
     const target = s.pagine.filter((p) => p.target && p.target_hash === p.immagine).length;
     const contenuti = s.pagine.filter((p) => p.scena.elementi.length > 0).length;
+    const conImmagine = s.pagine.filter((p) => p.immagine).length;
     const cls = (f, t) => (t && f === t) ? 'fatto' : (f > 0 ? 'parziale' : '');
-    return { pagine: n ? 'fatto' : '', target: cls(target, n), contenuti: cls(contenuti, n), pubblica: s.pubblicato ? 'fatto' : '', n, nTarget: target, nContenuti: contenuti };
+    return { pagine: cls(conImmagine, n), target: cls(target, n), contenuti: cls(contenuti, n), pubblica: s.pubblicato ? 'fatto' : '', n, nImmagini: conImmagine, nTarget: target, nContenuti: contenuti };
   },
   vai(passo, extra = {}) { mostraPasso(passo, extra); },
   aggiornaStepper,

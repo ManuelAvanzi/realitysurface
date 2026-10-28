@@ -1,4 +1,4 @@
-// Passo 1 — Pagine: caricamento multiplo, ordine, titoli, qualità dell'immagine.
+// Passo 1 — Pagine: caricamento multiplo, ordine, titoli, qualità dell'immagine, consigli del template.
 import { ic } from '../js/icone.js';
 import { $, $$, api, esc, toast, dimensioniFile, qualitaImmagine, etichettaQualita } from '../js/comune.js';
 
@@ -15,33 +15,41 @@ export function initPagine(ctx) {
   zona.addEventListener('drop', (e) => carica([...e.dataTransfer.files]));
   input.addEventListener('change', (e) => { carica([...e.target.files]); e.target.value = ''; });
 
-  async function carica(files) {
-    files = files.filter((f) => f.type.startsWith('image/')).sort((a, b) => a.name.localeCompare(b.name, 'it', { numeric: true }));
-    if (!files.length) return toast('Scegli file immagine (JPG o PNG)', 'err');
-    const t = toast(`Carico ${files.length} pagine…`, '', 60000);
-    for (const file of files) {
-      try {
-        const { w, h, img } = await dimensioniFile(file);
-        const qualita = img ? qualitaImmagine(img) : null;
-        const fd = new FormData();
-        fd.append('immagine', file); fd.append('larghezza_px', w); fd.append('altezza_px', h);
-        fd.append('titolo', file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '));
-        if (qualita != null) fd.append('qualita', qualita);
-        await api(`/api/stampati/${ctx.id}/pagine`, { method: 'POST', body: fd });
-      } catch (err) { toast(`${file.name}: ${err.message}`, 'err'); }
-    }
-    t.remove();
-    await ctx.ricarica(); render();
-    toast(`${files.length} pagine caricate`, 'ok');
-  }
-
-  async function sostituisci(p, file) {
+  async function datiFile(file) {
     const { w, h, img } = await dimensioniFile(file);
     const fd = new FormData();
     fd.append('immagine', file); fd.append('larghezza_px', w); fd.append('altezza_px', h);
     if (img) fd.append('qualita', qualitaImmagine(img));
-    await api(`/api/pagine/${p.id}/immagine`, { method: 'POST', body: fd });
-    await ctx.ricarica(); render(); toast('Immagine sostituita: il target va ricompilato', 'ok');
+    return fd;
+  }
+
+  /** Carica i file: prima riempie le pagine vuote (dal template) in ordine, poi crea pagine nuove. */
+  async function carica(files) {
+    files = files.filter((f) => f.type.startsWith('image/')).sort((a, b) => a.name.localeCompare(b.name, 'it', { numeric: true }));
+    if (!files.length) return toast('Scegli file immagine (JPG o PNG)', 'err');
+    const vuote = ctx.stampato.pagine.filter((p) => !p.immagine);
+    const t = toast(`Carico ${files.length} immagini…`, '', 60000);
+    let n = 0;
+    for (const file of files) {
+      try {
+        const fd = await datiFile(file);
+        const vuota = vuote.shift();
+        if (vuota) await api(`/api/pagine/${vuota.id}/immagine`, { method: 'POST', body: fd });
+        else {
+          fd.append('titolo', file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '));
+          await api(`/api/stampati/${ctx.id}/pagine`, { method: 'POST', body: fd });
+        }
+        n++;
+      } catch (err) { toast(`${file.name}: ${err.message}`, 'err'); }
+    }
+    t.remove();
+    await ctx.ricarica(); render();
+    toast(`${n} immagini caricate`, 'ok');
+  }
+
+  async function sostituisci(p, file) {
+    await api(`/api/pagine/${p.id}/immagine`, { method: 'POST', body: await datiFile(file) });
+    await ctx.ricarica(); render(); toast(p.immagine ? 'Immagine sostituita: il target va ricompilato' : 'Immagine caricata', 'ok');
   }
 
   async function sposta(p, delta) {
@@ -53,31 +61,46 @@ export function initPagine(ctx) {
     await ctx.ricarica(); render();
   }
 
+  async function aggiungiVuota() {
+    await api(`/api/stampati/${ctx.id}/pagine`, { method: 'POST', body: JSON.stringify({ titolo: `Pagina ${ctx.stampato.pagine.length + 1}` }) });
+    await ctx.ricarica(); render();
+  }
+
+  function renderConsigli() {
+    const t = ctx.stampato.templateInfo; const box = $('#consigli-template');
+    if (!t) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = `<summary>${ic('attenzione')} Consigli per: ${esc(t.nome)} (${t.larghezza_mm}×${t.altezza_mm} mm)</summary><ul>${t.consigli.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`;
+  }
+
   function render() {
+    renderConsigli();
     const pagine = ctx.stampato.pagine;
+    const senza = pagine.filter((p) => !p.immagine).length;
     const scarse = pagine.filter((p) => p.qualita != null && p.qualita < 35).length;
     $('#consiglio-pagine').textContent = pagine.length
-      ? `${pagine.length} pagine. ${scarse ? `${scarse} con qualità scarsa: fondi uniformi o pochi dettagli si riconoscono male. Meglio grafiche ricche di contrasto.` : 'Le immagini hanno dettagli sufficienti per il riconoscimento.'}`
+      ? `${pagine.length} pagine${senza ? `, ${senza} ancora senza immagine: trascinale qui sopra, vengono assegnate in ordine` : ''}. ${scarse ? `${scarse} con qualità scarsa: fondi uniformi o pochi dettagli si riconoscono male.` : (senza ? '' : 'Le immagini hanno dettagli sufficienti per il riconoscimento.')}`
       : 'Consiglio: immagini ricche di dettagli e contrasto (foto, illustrazioni, testo grande) si riconoscono meglio di fondi uniformi.';
     griglia.innerHTML = pagine.map((p) => {
       const q = etichettaQualita(p.qualita);
       const target = p.target && p.target_hash === p.immagine;
-      return `<article class="card pagina-card" data-id="${p.id}">
-        <div class="thumb" style="background-image:url('/uploads/${esc(p.immagine)}')"><span class="num">${p.ordine}</span></div>
+      return `<article class="card pagina-card ${p.immagine ? '' : 'vuota'}" data-id="${p.id}">
+        <div class="thumb" ${p.immagine ? `style="background-image:url('/uploads/${esc(p.immagine)}')"` : ''}><span class="num">${p.ordine}</span>
+          ${p.immagine ? '' : `<label class="btn carica">${ic('upload')} Carica immagine<input type="file" accept="image/*" hidden data-sost></label>`}</div>
         <div class="corpo">
           <input value="${esc(p.titolo)}" data-titolo title="Titolo della pagina">
-          <div class="badges"><span class="badge ${q.cls}" title="Stima di tracciabilità">qualità ${q.testo}</span>
-            <span class="badge ${target ? 'ok' : 'warn'}">${target ? 'target pronto' : 'target da compilare'}</span>
+          <div class="badges">${p.immagine ? `<span class="badge ${q.cls}" title="Stima di tracciabilità">qualità ${q.testo}</span>
+            <span class="badge ${target ? 'ok' : 'warn'}">${target ? 'target pronto' : 'target da compilare'}</span>` : `<span class="badge err">senza immagine</span>`}
             ${p.scena.elementi.length ? `<span class="badge">${p.scena.elementi.length} elementi</span>` : ''}</div>
           <div class="azioni">
             <button data-su title="Sposta prima">${ic('indietro')}</button>
             <button data-giu title="Sposta dopo">${ic('avanti')}</button>
-            <label class="btn" title="Sostituisci immagine">${ic('aggiorna')}<input type="file" accept="image/*" hidden data-sost></label>
+            ${p.immagine ? `<label class="btn" title="Sostituisci immagine">${ic('aggiorna')}<input type="file" accept="image/*" hidden data-sost></label>` : ''}
             <a class="btn" href="#" data-contenuti title="Vai ai contenuti di questa pagina">${ic('cubo')}</a>
             <button class="pericolo" data-del title="Elimina pagina" style="margin-left:auto">${ic('cestino')}</button>
           </div>
         </div></article>`;
-    }).join('');
+    }).join('') + `<button class="card pagina-card aggiungi-pagina" id="btn-pagina-vuota">${ic('plus')}<span>Aggiungi pagina vuota</span></button>`;
     $$('[data-id]', griglia).forEach((card) => {
       const p = pagine.find((x) => x.id === Number(card.dataset.id));
       $('[data-titolo]', card).addEventListener('change', async (e) => {
@@ -86,7 +109,7 @@ export function initPagine(ctx) {
       });
       $('[data-su]', card).addEventListener('click', () => sposta(p, -1));
       $('[data-giu]', card).addEventListener('click', () => sposta(p, 1));
-      $('[data-sost]', card).addEventListener('change', (e) => { if (e.target.files[0]) sostituisci(p, e.target.files[0]); });
+      $$('[data-sost]', card).forEach((i) => i.addEventListener('change', (e) => { if (e.target.files[0]) sostituisci(p, e.target.files[0]); }));
       $('[data-contenuti]', card).addEventListener('click', (e) => { e.preventDefault(); ctx.vai('contenuti', { p: p.id }); });
       $('[data-del]', card).addEventListener('click', async () => {
         if (!confirm(`Eliminare la pagina “${p.titolo}” con la sua scena? Il suo QR smetterà di funzionare.`)) return;
@@ -94,7 +117,8 @@ export function initPagine(ctx) {
         await ctx.ricarica(); render();
       });
     });
-    $('#avanti-target').disabled = !pagine.length;
+    $('#btn-pagina-vuota').addEventListener('click', aggiungiVuota);
+    $('#avanti-target').disabled = !pagine.some((p) => p.immagine);
   }
 
   /** Pagine senza punteggio (caricate prima della stima o dalla demo): lo calcola ora e lo salva. */

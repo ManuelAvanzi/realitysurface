@@ -17,7 +17,7 @@ export const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-export const TIPI_STAMPATO = ['libro', 'biglietto', 'brochure', 'copertina', 'poster', 'altro'];
+export const TIPI_STAMPATO = ['libro', 'biglietto', 'brochure', 'copertina', 'poster', 'plastico', 'altro'];
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS utenti (
@@ -91,6 +91,8 @@ function aggiungiColonna(tabella, colonna, definizione) {
 aggiungiColonna('stampati', 'utente_id', 'INTEGER REFERENCES utenti(id) ON DELETE CASCADE');
 aggiungiColonna('stampati', 'pubblicato', 'INTEGER NOT NULL DEFAULT 0');
 aggiungiColonna('pagine', 'qualita', 'REAL');   // 0-100: stima di tracciabilità dell'immagine
+aggiungiColonna('stampati', 'template', 'TEXT');                       // id del template di partenza (server/template.js)
+aggiungiColonna('stampati', 'impostazioni', "TEXT NOT NULL DEFAULT '{}'"); // JSON: es. plastico {riferimento, scala, offset}
 
 const ALFABETO = 'abcdefghijkmnpqrstuvwxyz23456789'; // senza caratteri ambigui (l, o, 0, 1)
 export function nuovoQrId(len = 7) {

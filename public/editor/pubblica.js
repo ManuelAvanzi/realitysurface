@@ -26,6 +26,7 @@ export function initPubblica(ctx) {
     $('#btn-foglio').href = `/stampa/${s.id}`;
     const avvisi = [];
     if (!st.n) avvisi.push(['Nessuna pagina caricata.', 'pagine', 'Carica le pagine']);
+    if (st.n && st.nImmagini < st.n) avvisi.push([`${st.n - st.nImmagini} pagine senza immagine.`, 'pagine', 'Carica le immagini']);
     if (st.n && st.nTarget < st.n) avvisi.push([`${st.n - st.nTarget} pagine senza target: il telefono non le riconoscerà.`, 'target', 'Compila i target']);
     if (st.n && st.nContenuti < st.n) avvisi.push([`${st.n - st.nContenuti} pagine senza contenuti 3D.`, 'contenuti', 'Aggiungi contenuti']);
     if (/localhost|127\.0\.0\.1/.test(base)) avvisi.push(['L’indirizzo pubblico è localhost: dal telefono i QR non funzioneranno. Avvia il server con PUBLIC_URL (vedi LEGGIMI).', null, null]);

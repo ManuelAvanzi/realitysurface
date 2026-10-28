@@ -6,6 +6,7 @@ import path from 'node:path';
 import QRCode from 'qrcode';
 import { db, UPLOADS_DIR, TIPI_STAMPATO, nuovoQrId, slugUnico } from '../db.js';
 import { richiediLogin, utenteDaRichiesta } from '../auth.js';
+import { TEMPLATE, templateDaId } from '../template.js';
 
 export const api = express.Router();
 
@@ -72,22 +73,28 @@ function pagina(id, req) {
   return p;
 }
 const conScena = (p) => ({ ...p, scena: JSON.parse(p.scena || '{"elementi":[]}') });
+const conImpostazioni = (s) => ({ ...s, impostazioni: JSON.parse(s.impostazioni || '{}') });
+function nuovoQr() {
+  let qr = nuovoQrId();
+  while (db.prepare('SELECT 1 FROM pagine WHERE qr_id = ?').get(qr)) qr = nuovoQrId();
+  return qr;
+}
 const tocca = (sid) => db.prepare(`UPDATE stampati SET updated_at = datetime('now') WHERE id = ?`).run(sid);
 // Per gli upload sulle pagine: multer salva nella cartella dello stampato (req.params.id).
 const idStampatoDellaPagina = (req, res, next) => { req.params.id = String(pagina(req.params.pid, req).stampato_id); next(); };
 
-api.get('/config', (req, res) => res.json({ publicUrl: urlPubblico(req), tipi: TIPI_STAMPATO }));
+api.get('/config', (req, res) => res.json({ publicUrl: urlPubblico(req), tipi: TIPI_STAMPATO, template: TEMPLATE }));
 
 // ---------- viewer (pubblico: stampati pubblicati, o del proprietario loggato) ----------
 api.get('/viewer/:slug', (req, res) => {
-  const s = db.prepare('SELECT id, slug, titolo, tipo, descrizione, larghezza_mm, altezza_mm, pubblicato, utente_id FROM stampati WHERE slug = ?').get(req.params.slug);
+  const s = db.prepare('SELECT id, slug, titolo, tipo, descrizione, larghezza_mm, altezza_mm, pubblicato, utente_id, template, impostazioni FROM stampati WHERE slug = ?').get(req.params.slug);
   if (!s) return res.status(404).json({ errore: 'Stampato non trovato' });
   const u = utenteDaRichiesta(req);
   const proprietario = u && (u.ruolo === 'admin' || u.id === s.utente_id);
   if (!s.pubblicato && !proprietario) return res.status(403).json({ errore: 'Questo stampato non è ancora pubblicato', nonPubblicato: true });
   const pagine = db.prepare(`SELECT id, ordine, titolo, qr_id, immagine, larghezza_px, altezza_px, target, scena
     FROM pagine WHERE stampato_id = ? ORDER BY ordine, id`).all(s.id).map(conScena);
-  const { utente_id, ...resto } = s;
+  const { utente_id, ...resto } = conImpostazioni(s);
   res.json({ ...resto, anteprima: !s.pubblicato, pagine });
 });
 
@@ -99,6 +106,7 @@ api.get('/stampati', (req, res) => {
   const filtro = req.utente.ruolo === 'admin' ? '' : 'WHERE s.utente_id = ?';
   const rows = db.prepare(`
     SELECT s.*, (SELECT COUNT(*) FROM pagine p WHERE p.stampato_id = s.id) AS n_pagine,
+           (SELECT COUNT(*) FROM pagine p WHERE p.stampato_id = s.id AND p.immagine IS NOT NULL) AS n_con_immagine,
            (SELECT COUNT(*) FROM pagine p WHERE p.stampato_id = s.id AND p.target IS NOT NULL AND p.target_hash = p.immagine) AS n_target,
            (SELECT COUNT(*) FROM pagine p WHERE p.stampato_id = s.id AND json_array_length(p.scena, '$.elementi') > 0) AS n_con_contenuti,
            (SELECT immagine FROM pagine p WHERE p.stampato_id = s.id ORDER BY ordine LIMIT 1) AS copertina,
@@ -109,13 +117,34 @@ api.get('/stampati', (req, res) => {
 });
 
 api.post('/stampati', (req, res) => {
-  const { titolo, tipo = 'libro', descrizione = '', larghezza_mm = 210, altezza_mm = 297 } = req.body || {};
-  if (!titolo?.trim()) return res.status(400).json({ errore: 'Titolo obbligatorio' });
+  const b = req.body || {};
+  const t = templateDaId(b.template);
+  const titolo = (b.titolo || '').trim();
+  if (!titolo) return res.status(400).json({ errore: 'Titolo obbligatorio' });
+  const tipo = TIPI_STAMPATO.includes(b.tipo) ? b.tipo : (t?.tipo || 'altro');
+  const w = Number(b.larghezza_mm) || t?.larghezza_mm || 210, h = Number(b.altezza_mm) || t?.altezza_mm || 297;
   const slug = slugUnico(titolo);
-  const info = db.prepare(`INSERT INTO stampati (slug, titolo, tipo, descrizione, larghezza_mm, altezza_mm, utente_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`).run(slug, titolo.trim(), TIPI_STAMPATO.includes(tipo) ? tipo : 'altro',
-    descrizione, Number(larghezza_mm) || 210, Number(altezza_mm) || 297, req.utente.id);
-  res.status(201).json(stampato(info.lastInsertRowid, req));
+  const creazione = db.transaction(() => {
+    const info = db.prepare(`INSERT INTO stampati (slug, titolo, tipo, descrizione, larghezza_mm, altezza_mm, utente_id, template, impostazioni)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(slug, titolo, tipo, b.descrizione || '', w, h, req.utente.id, t?.id || null,
+      JSON.stringify({ scalaContenuti: t?.scalaContenuti || 1 }));
+    const sid = info.lastInsertRowid;
+    // Pagine iniziali vuote (senza immagine) dal template, se richieste.
+    if (t && b.pagineIniziali !== false) {
+      const ins = db.prepare('INSERT INTO pagine (stampato_id, ordine, titolo, qr_id) VALUES (?, ?, ?, ?)');
+      t.pagine.forEach((nome, i) => ins.run(sid, i + 1, nome, nuovoQr()));
+    }
+    return sid;
+  });
+  res.status(201).json(stampato(creazione(), req));
+});
+
+// Impostazioni specifiche (es. plastico: modello di riferimento GLB, scala, offset).
+api.put('/stampati/:id/impostazioni', (req, res) => {
+  const s = stampato(req.params.id, req);
+  const nuove = { ...JSON.parse(s.impostazioni || '{}'), ...(req.body || {}) };
+  db.prepare(`UPDATE stampati SET impostazioni = ?, updated_at = datetime('now') WHERE id = ?`).run(JSON.stringify(nuove), s.id);
+  res.json(conImpostazioni(stampato(s.id, req)));
 });
 
 api.get('/stampati/:id', (req, res) => {
@@ -123,7 +152,7 @@ api.get('/stampati/:id', (req, res) => {
   const pagine = db.prepare(`SELECT p.*, (SELECT COUNT(*) FROM scansioni x WHERE x.pagina_id = p.id) AS n_scansioni
     FROM pagine p WHERE stampato_id = ? ORDER BY ordine, id`).all(s.id).map(conScena);
   const asset = db.prepare('SELECT * FROM asset WHERE stampato_id = ? ORDER BY id').all(s.id);
-  res.json({ ...s, pagine, asset });
+  res.json({ ...conImpostazioni(s), pagine, asset, templateInfo: templateDaId(s.template) });
 });
 
 api.put('/stampati/:id', (req, res) => {
@@ -163,8 +192,7 @@ api.post('/stampati/:id/pagine', upload.single('immagine'), (req, res) => {
     immagine = rel(req.file.path);
     if (!w || !h) ({ w, h } = dimensioniImmagine(req.file.path));
   }
-  let qr = nuovoQrId();
-  while (db.prepare('SELECT 1 FROM pagine WHERE qr_id = ?').get(qr)) qr = nuovoQrId();
+  const qr = nuovoQr();
   const info = db.prepare(`INSERT INTO pagine (stampato_id, ordine, titolo, qr_id, immagine, larghezza_px, altezza_px, scena, qualita)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(s.id, max + 1, req.body?.titolo || `Pagina ${max + 1}`, qr, immagine, w, h,
     req.body?.scena || '{"elementi":[]}', req.body?.qualita !== undefined ? Number(req.body.qualita) : null);
@@ -254,5 +282,11 @@ api.post('/demo/pianeti', async (req, res, next) => {
   try {
     const { creaDemoPianeti } = await import('../../tools/demo-pianeti.mjs');
     res.status(201).json(await creaDemoPianeti({ baseUrl: urlPubblico(req), utenteId: req.utente.id }));
+  } catch (e) { next(e); }
+});
+api.post('/demo/plastico', async (req, res, next) => {
+  try {
+    const { creaDemoPlastico } = await import('../../tools/demo-plastico.mjs');
+    res.status(201).json(await creaDemoPlastico({ baseUrl: urlPubblico(req), utenteId: req.utente.id }));
   } catch (e) { next(e); }
 });

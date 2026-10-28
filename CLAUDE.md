@@ -55,25 +55,40 @@ fuori scopo della v1.
 ```
 REALITYPAPER/
   server/index.js      Node + Express (porta 5500): /vendor/* da node_modules, /static, /uploads, cookie-parser
-  server/db.js         SQLite data/realitypaper.db: utenti, sessioni, stampati (utente_id, pubblicato), pagine (qr_id, immagine,
+  server/db.js         SQLite data/realitypaper.db: utenti, sessioni, stampati (utente_id, pubblicato, template, impostazioni JSON), pagine (qr_id, immagine,
                        qualita 0-100, target .mind, target_hash, scena JSON), asset, scansioni; migrazioni con aggiungiColonna()
+  server/template.js   CATALOGO TEMPLATE (biglietto 85x55, brochure 6 ante 99x210, libro A4, poster A3, plastico A3 oriz., libero):
+                       formato, pagine iniziali vuote, consigli, scalaContenuti, flag plastico
   server/auth.js       registrazione/login/logout/me; cookie httpOnly rp_sessione -> tabella sessioni (30 gg); primo utente = admin
   server/routes/api.js tutto dietro richiediLogin tranne /config e /viewer/:slug (pubblico solo se pubblicato, o proprietario);
-                       CRUD stampati/pagine/asset, PUT /stampati/:id/ordine, upload (multer), target, qr.png|svg, /demo/pianeti
+                       CRUD stampati/pagine/asset, POST /stampati con template (crea pagine vuote), PUT /stampati/:id/ordine e /impostazioni,
+                       upload (multer), target, qr.png|svg, /demo/pianeti, /demo/plastico; /config espone il catalogo template
   server/routes/public.js  / portale, /login, /editor/, /v/:slug/:n viewer, /q/:qr redirect+log, /stampa/:id foglio QR (proprietario)
   public/js/comune.js  api(), toast, richiediUtente() (-> /login), chipUtente, qualitaImmagine() (Sobel + copertura griglia 4x4)
-  public/js/scena.js   MODULO CONDIVISO editor/viewer: JSON scena -> three.js (glb, sfera, testo, immagine; anim rotazione/fluttua/orbita)
+  public/js/scena.js   MODULO CONDIVISO editor/viewer: JSON scena -> three.js (glb+clip, sfera, testo, immagine, personaggio procedurale,
+                       blocco); anim rotazione/fluttua/orbita/PERCORSO (punti, velocita, loop, orienta, offsetRot); animaElemento();
+                       costruisciRiferimento(impostazioni, 'editor'|'viewer') = GLB del plastico fantasma / occlusore (colorWrite false)
   public/js/three-shim.js  "three" dell'importmap = three.module.js + sRGBEncoding (MindAR lo importa ancora)
   public/login.html    accesso/registrazione (al primo avvio forza la registrazione dell'admin)
   public/editor/editor.js   SHELL A PASSI (?passo=pagine|target|contenuti|pubblica, ?p=<pagina>): ctx condiviso, stepper con stato
-  public/editor/pagine.js   passo 1: drag&drop multiplo, titoli, ordine (su/giu), sostituisci immagine, qualita (calcolata nel browser)
+  public/editor/pagine.js   passo 1: consigli del template, drag&drop multiplo (riempie prima le pagine vuote del template), titoli, ordine,
+                       sostituisci/carica immagine, pagina vuota, qualita (calcolata nel browser)
   public/editor/target.js   passo 2: tabella pagine + compila .mind (MindAR Compiler nel browser), ?compila=1 compila i mancanti
-  public/editor/scena3d.js  passo 3: editor three.js (OrbitControls + TransformControls), elementi, proprieta, asset, Salva/Ctrl+S
+  public/editor/scena3d.js  passo 3: editor three.js (OrbitControls + TransformControls), elementi, proprieta, asset, Salva/Ctrl+S;
+                       pannello Plastico (GLB riferimento, ingombro, offset, rotazione); percorsi: lista punti, punto attivo spostato col gizmo,
+                       linea tratteggiata, bottone Anteprima che anima tutti gli elementi tranne il selezionato
   public/editor/pubblica.js passo 4: interruttore Pubblicato/Bozza, link viewer, avvisi, QR per pagina (PNG/SVG), foglio di stampa
   public/viewer/       viewer: MindARThree (anchor 0) -> fallback 3D (OrbitControls); 403 "non pubblicato"; proprietario vede anteprima
   tools/demo-pianeti.mjs  genera "Il libro dei pianeti" (3 pagine PNG con QR incorporato + texture + scene) con node-canvas
+  tools/demo-plastico.mjs genera "Plastico del borgo": basamento A3 (mappa, strade, fiume, impronte edifici, QR) + 9 blocchi, campanile,
+                       3 etichette, 4 personaggi con percorsi
   uploads/<id stampato>/  immagini pagina, .mind, texture, GLB      data/  database
 ```
+
+**Stato 28/10/2026 notte: v0.3-template FATTA e collaudata**: catalogo template nella finestra Nuovo stampato (pagine iniziali vuote
+da riempire col drag&drop, consigli nel passo Pagine), tipo "plastico" con basamento stampato come target + GLB di riferimento
+(fantasma nell'editor, occlusore nel viewer AR, visibile nel viewer 3D), elementi personaggio (NPC procedurale che cammina) e blocco,
+animazione percorso a punti editabile col gizmo, demo "Plastico del borgo". Commit da fare.
 
 **Stato 28/10/2026 sera: v0.2 "piattaforma" FATTA e collaudata**: account (primo = admin), stampati per utente,
 pubblicazione (bozza/pubblicato, viewer 403 se bozza), editor a 4 passi con stepper (Pagine -> Target -> Contenuti -> Pubblica),
@@ -106,8 +121,10 @@ tracking) → `AR Quick Look` (iPhone, USDZ generato dal GLB) → `3D viewer non
 
 - v0.1 FATTA: server + editor + viewer MindAR + QR + demo "Pianeti".
 - v0.2 FATTA: piattaforma (account, pubblicazione), editor a passi, qualita immagine, riordino, foglio di stampa.
-- v0.3: prova AR dal telefono; QR unico per tutto lo stampato (piu' target in un .mind); audio/video; WebXR hit-test (Quest/Android), USDZ iPhone.
-- v0.4: galleria pubblica, statistiche scansioni per periodo, template di stampati (biglietto, brochure), deploy (Render/VPS + dominio).
+- v0.3 FATTA (parte template): template di stampati, plastico con riferimento GLB/occlusore, personaggi NPC con percorso, blocchi.
+- v0.3 resto: prova AR dal telefono; QR unico per tutto lo stampato (piu' target in un .mind); audio/video; GLB NPC con clip Walk;
+  WebXR hit-test (Quest/Android), USDZ iPhone.
+- v0.4: galleria pubblica, statistiche scansioni per periodo, deploy (Render/VPS + dominio).
 
 ## Gotcha / note di sviluppo
 
@@ -124,4 +141,7 @@ tracking) → `AR Quick Look` (iPhone, USDZ generato dal GLB) → `3D viewer non
 - node-canvas `putImageData` non compone con lo sfondo: disegnare su canvas temporaneo e poi `drawImage`.
 - `button[hidden]` resta visibile perche' rp.css gli da' display:inline-flex -> c'e' `[hidden]{display:none!important}` globale.
 - Il pannello browser NON puo' caricare file: l'upload pagine si collauda via curl con cookie (-c/-b), vedi sessione 28/10.
+- Plastico: il tracking e' SEMPRE del basamento stampato (immagine), mai del modello 3D; il GLB serve solo come occlusore/riferimento.
+- Personaggio procedurale: in piedi lungo z, guarda verso +x (naso); il percorso ruota attorno a z con atan2(dy,dx)+offsetRot.
+  Per un GLB (y-up, davanti +z) dopo il wrap x=90 il davanti e' -y: offsetRot 90 lo allinea.
 - Convenzione sfera: asse polare lungo z (rotation.x = 90°) così `anim.rotazione.asse:'z'` = pianeta che gira in piano.

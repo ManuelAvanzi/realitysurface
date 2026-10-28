@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ic } from '../js/icone.js';
-import { costruisciScena, aggiungiLuci, pianoPagina } from '../js/scena.js';
+import { costruisciScena, aggiungiLuci, pianoPagina, costruisciRiferimento } from '../js/scena.js';
 
 const $ = (s) => document.querySelector(s);
 const m = location.pathname.match(/^\/v\/([^/]+)(?:\/(\d+))?/);
@@ -37,6 +37,7 @@ async function avvia3d() {
   const p = stato.pagina;
   scene.add(pianoPagina(p.immagine ? `/uploads/${p.immagine}` : null, p.larghezza_px, p.altezza_px));
   const gruppo = new THREE.Group(); scene.add(gruppo);
+  try { const rif = await costruisciRiferimento(stato.stampato.impostazioni, 'editor'); if (rif) gruppo.add(rif); } catch (e) { console.warn(e); }
   const { aggiorna } = await costruisciScena(p.scena, gruppo);
   const ridim = () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); };
   addEventListener('resize', ridim); ridim();
@@ -63,6 +64,7 @@ async function avviaAr() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const anchor = mindar.addAnchor(0);
   aggiungiLuci(anchor.group);
+  try { const rif = await costruisciRiferimento(stato.stampato.impostazioni, 'viewer'); if (rif) anchor.group.add(rif); } catch (e) { console.warn(e); }
   const { aggiorna } = await costruisciScena(p.scena, anchor.group);
   anchor.onTargetFound = () => { $('#hint').hidden = true; };
   anchor.onTargetLost = () => { $('#hint').hidden = false; };

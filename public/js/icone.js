@@ -28,6 +28,12 @@ const P = {
   play: '<path d="M7 4l12 8-12 8z"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
   compila: '<path d="M4 12l4-4 4 4-4 4zM12 12l4-4 4 4-4 4z"/>',
+  persona: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/>',
+  blocco: '<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>',
+  biglietto: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h5M7 14h8"/><circle cx="16.5" cy="10.5" r="1.5"/>',
+  brochure: '<path d="M3 5l6-1 6 1 6-1v15l-6 1-6-1-6 1z"/><path d="M9 4v15M15 5v15"/>',
+  poster: '<rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h4"/>',
+  plastico: '<path d="M3 15l9 5 9-5-9-5z"/><path d="M8 12V8l4-3 4 3v4"/><path d="M10 10h4"/>',
 };
 export function ic(nome, cls = '') {
   return `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[nome] || ''}</svg>`;
