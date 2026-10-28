@@ -46,6 +46,26 @@ Il flusso è:
 
 I QR puntano a `/q/<id>` (redirezione): la scena si può cambiare anche dopo la stampa.
 
+## Senza stampante: un quaderno, un foglio, un oggetto piatto
+Non serve stampare nulla. Il QR serve solo ad aprire il link: lo inquadri sullo schermo del PC
+o apri il link a mano. Il riconoscimento usa l'immagine della pagina, che può essere una **foto**.
+
+1. Passo 1, **Scatta dal telefono** (o il bottone con il telefono sulla singola pagina): compare
+   un QR. Inquadralo con la fotocamera del telefono: si apre una pagina senza login.
+2. Scatta la foto del foglio (o scegline una dalla galleria), trascina i quattro punti sugli
+   angoli del foglio e premi **Raddrizza e invia**: la foto viene raddrizzata come una scansione
+   e arriva nell'editor, che si aggiorna da solo.
+3. Compila il target e aggiungi i contenuti come sempre. Per vedere l'AR apri il link della
+   pagina sul telefono e inquadra il foglio vero.
+
+Il telefono deve raggiungere il PC: nella stessa Wi-Fi il dialogo propone l'indirizzo locale
+(es. `http://192.168.1.6:5500`), e per scattare la foto NON serve HTTPS. Con il tunnel attivo
+(`PUBLIC_URL`) funziona anche da fuori. Il link di cattura vale 30 minuti.
+
+Cosa funziona e cosa no: il foglio deve avere qualcosa sopra, con contrasto (un disegno a
+pennarello, una pagina scritta). Un foglio bianco o solo a righe/quadretti non si riconosce.
+Tieni il foglio piatto: il riconoscimento è per superfici piane.
+
 ## Provare dal telefono (AR vera)
 La fotocamera nel browser richiede HTTPS. Il modo più semplice è un tunnel:
 

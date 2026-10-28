@@ -1,6 +1,7 @@
 /* Editor REALITYPAPER: shell a passi + editor 3D */
 body { overflow: hidden; }
-.app { display: grid; grid-template-rows: 52px 1fr; height: 100vh; }
+.app { display: grid; grid-template-rows: 52px 1fr; grid-template-columns: minmax(0, 1fr); height: 100vh; } /* minmax(0,1fr): la barra larga non deve allargare i passi */
+.app > .barra { min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .barra input.titolo { width: 240px; background: transparent; border-color: transparent; font-weight: 600; }
 .barra input.titolo:hover, .barra input.titolo:focus { border-color: var(--bordo); background: var(--bg); }
 .chip-utente { color: var(--testo2); font-size: 12px; }
@@ -130,3 +131,17 @@ summary { cursor: pointer; font-size: 12px; color: var(--testo2); }
 .riga.avvolgi { flex-wrap: wrap; align-items: flex-end; }
 .riga.avvolgi > .fisso { flex: none; }
 .riga.avvolgi label { margin-top: 0; }
+
+/* cattura dal telefono (passo 1) */
+.senza-stampa { margin-top: 8px; }
+.dlg-cattura { max-width: 640px; }
+.dlg-cattura .corpo { display: flex; gap: 18px; align-items: flex-start; }
+.dlg-cattura .qr { flex: none; width: 220px; height: 220px; background: #fff; border-radius: 8px; padding: 6px; }
+.dlg-cattura .qr img { width: 100%; height: 100%; display: block; }
+.dlg-cattura .testo { flex: 1; min-width: 0; }
+.dlg-cattura code { display: block; font-size: 11px; color: var(--testo2); word-break: break-all; margin: 4px 0 8px; }
+.dlg-cattura .stato { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--testo2); font-size: 13px; }
+.dlg-cattura .stato .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--warn); animation: pulsa 1.2s infinite; }
+@keyframes pulsa { 50% { opacity: .3; } }
+.dlg-cattura .piede { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.pagina-card .thumb .carica.tel { top: calc(50% + 34px); }

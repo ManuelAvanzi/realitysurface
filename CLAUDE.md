@@ -78,6 +78,12 @@ REALITYPAPER/
   public/editor/pagine.js   passo 1: consigli del template, blocco PLASTICO (carica GLB -> impostazioni.riferimento, ingombro, rotazione,
                        "Genera basamento dal modello"), drag&drop multiplo (riempie prima le pagine vuote), titoli, ordine, sostituisci/carica
                        immagine, pagina vuota, qualita (calcolata nel browser)
+                       CATTURA DAL TELEFONO: bottone "Scatta dal telefono" (+ per pagina) -> POST /api/stampati/:id/cattura -> dialogo
+                       con QR (basi: PUBLIC_URL e IP LAN) + poll ogni 2 s di /cattura/:token -> chiude e ricarica quando usato
+  public/cattura.html + public/js/cattura.js  PAGINA TELEFONO /cattura/<token> (senza login, token valido 30 min): foto da
+                       <input capture> (funziona anche in http), 4 angoli trascinabili, omografia 8x8 + bilineare (raddrizza come
+                       uno scanner), qualita, POST /api/cattura/<token> (multipart) -> immagine della pagina (o pagina nuova);
+                       window.__cattura per il collaudo senza fotocamera
   public/editor/target.js   passo 2: tabella pagine + compila .mind (MindAR Compiler nel browser), ?compila=1 compila i mancanti
   public/editor/scena3d.js  passo 3: editor three.js (OrbitControls + TransformControls), elementi, proprieta, asset, Salva/Ctrl+S;
                        pannello Plastico (GLB riferimento, ingombro, offset, rotazione); percorsi: lista punti, punto attivo spostato col gizmo,
@@ -91,6 +97,14 @@ REALITYPAPER/
                        3 etichette, 4 personaggi con percorsi
   uploads/<id stampato>/  immagini pagina, .mind, texture, GLB      data/  database
 ```
+
+**Stato 29/10/2026 sera: v0.3.2 CATTURA DAL TELEFONO** (risposta a "non ho una stampante: come faccio sul quaderno?"):
+la pagina puo' essere una FOTO del foglio/quaderno (il target e' la foto, il QR si apre dallo schermo del PC). Tabella `catture`
+(token, stampato_id, pagina_id nullable, usato), route pubbliche /cattura/:token (html) + /api/cattura/:token (GET info, POST foto),
+protette POST /api/stampati/:id/cattura, GET .../cattura/:token (stato) e .../qr.png?base=. Il server propone come base PUBLIC_URL
+e gli IP IPv4 della LAN (os.networkInterfaces): nella stessa Wi-Fi funziona SENZA tunnel perche' <input capture> non richiede HTTPS.
+Collaudato nel pannello con foto sintetica in prospettiva (window.__cattura) e upload curl col token: dialogo chiuso da solo, card
+aggiornata. Fix: .app grid-template-columns minmax(0,1fr) (la barra larga allargava i passi nel pannello stretto). Commit da fare.
 
 **Stato 29/10/2026: v0.3.1** illustrazioni SVG delle superfici nel picker template e nelle copertine; FLUSSO PLASTICO ribaltato:
 il plastico si costruisce ALTROVE (stampa 3D, Blender), qui si carica il GLB e si genera il basamento stampabile dal modello
@@ -136,9 +150,12 @@ tracking) → `AR Quick Look` (iPhone, USDZ generato dal GLB) → `3D viewer non
 - v0.1 FATTA: server + editor + viewer MindAR + QR + demo "Pianeti".
 - v0.2 FATTA: piattaforma (account, pubblicazione), editor a passi, qualita immagine, riordino, foglio di stampa.
 - v0.3 FATTA (parte template): template di stampati, plastico con riferimento GLB/occlusore, personaggi NPC con percorso, blocchi.
+- v0.3.2 FATTA: cattura della pagina dal telefono (foto raddrizzata = pagina), senza stampante.
 - v0.3 resto: prova AR dal telefono; QR unico per tutto lo stampato (piu' target in un .mind); audio/video; GLB NPC con clip Walk;
   WebXR hit-test (Quest/Android), USDZ iPhone.
-- v0.4: template "Luogo" (installazione geolocalizzata: GPS + bussola + altezza, raggio di attivazione, fallback targa stampata),
+- v0.4: MODALITA' LENS (un solo link: legge QR/EAN esistenti via WebAssembly + riconosce la pagina per embedding visivo
+  DINOv2/MobileCLIP lato server -> scena; vedi docs/ingresso-senza-qr.md), NFC documentato (tag con /q/<id>),
+  template "Luogo" (installazione geolocalizzata: GPS + bussola + altezza, raggio di attivazione, fallback targa stampata),
   galleria pubblica, statistiche scansioni per periodo, deploy (Render/VPS + dominio).
 
 ## Gotcha / note di sviluppo

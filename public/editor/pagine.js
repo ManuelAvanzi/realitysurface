@@ -10,6 +10,8 @@ export function initPagine(ctx) {
   $('#dropzone-ic').innerHTML = ic('upload');
   $('#avanti-target').innerHTML = `Avanti: compila i target ${ic('avanti')}`;
   $('#avanti-target').addEventListener('click', () => ctx.vai('target'));
+  $('#btn-cattura').innerHTML = `${ic('telefono')} Scatta dal telefono`;
+  $('#btn-cattura').addEventListener('click', () => apriCattura(ctx.stampato.pagine.find((p) => !p.immagine) || null));
 
   ['dragenter', 'dragover'].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.add('sopra'); }));
   ['dragleave', 'drop'].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.remove('sopra'); }));
@@ -130,6 +132,51 @@ export function initPagine(ctx) {
     } catch (e) { console.error(e); toast(`Generazione fallita: ${e.message || e}`, 'err'); btn.disabled = false; }
   }
 
+  // ---------- cattura dal telefono: QR → pagina /cattura/<token> → la foto raddrizzata arriva qui ----------
+  let catturaTimer = null;
+  async function apriCattura(p) {
+    let dlg = $('#dlg-cattura');
+    if (!dlg) { dlg = document.createElement('dialog'); dlg.id = 'dlg-cattura'; dlg.className = 'dlg-cattura'; document.body.appendChild(dlg); }
+    let c;
+    try { c = await api(`/api/stampati/${ctx.id}/cattura`, { method: 'POST', body: JSON.stringify({ pagina_id: p?.id || null }) }); }
+    catch (e) { return toast(e.message, 'err'); }
+    const soloLocale = c.basi.every((b) => b.tipo === 'locale');
+    const render = (base) => {
+      const url = `${base}${c.percorso}`;
+      dlg.innerHTML = `<h3>Fotografa la pagina dal telefono</h3>
+        <p class="muto piccolo">Pagina: <b>${esc(p ? p.titolo : 'nuova pagina in coda')}</b>${p?.immagine ? ' · la foto sostituirà l’immagine attuale' : ''}</p>
+        <div class="corpo">
+          <div class="qr"><img src="/api/stampati/${ctx.id}/cattura/${c.token}/qr.png?base=${encodeURIComponent(base)}" alt="QR per il telefono"></div>
+          <div class="testo">
+            ${c.basi.length > 1 ? `<label>Il telefono raggiunge il PC tramite</label><select id="cat-base">${c.basi.map((b) => `<option value="${esc(b.url)}" ${b.url === base ? 'selected' : ''}>${esc(b.nome)}</option>`).join('')}</select>` : ''}
+            <label>Link (vale ${c.minuti} minuti)</label><code>${esc(url)}</code>
+            <p class="muto piccolo">Inquadra il QR con la fotocamera del telefono, scatta la foto del foglio, trascina i quattro angoli sui bordi e invia. Il foglio deve avere un disegno o del testo con contrasto: bianco o solo righe non si riconosce.</p>
+            ${soloLocale ? `<p class="piccolo" style="color:var(--warn)">Il server risponde solo su questo PC: il telefono non lo raggiunge. Collega il PC alla rete Wi-Fi per avere un indirizzo locale, oppure avvia il tunnel e imposta PUBLIC_URL.</p>` : ''}
+            <div class="stato"><span class="punto"></span><span id="cat-stato">In attesa della foto…</span></div>
+          </div>
+        </div>
+        <div class="piede"><button id="cat-chiudi">Chiudi</button></div>`;
+      $('#cat-base', dlg)?.addEventListener('change', (e) => render(e.target.value));
+      $('#cat-chiudi', dlg).addEventListener('click', () => dlg.close());
+    };
+    render(c.basi[0].url);
+    dlg.showModal();
+    clearInterval(catturaTimer);
+    catturaTimer = setInterval(async () => {
+      if (!dlg.open) return clearInterval(catturaTimer);
+      try {
+        const st = await api(`/api/stampati/${ctx.id}/cattura/${c.token}`);
+        if (st.usato) {
+          clearInterval(catturaTimer); dlg.close();
+          await ctx.ricarica(); render0();
+          toast('Foto ricevuta dal telefono: la pagina è pronta, ora compila il target', 'ok', 5000);
+        }
+      } catch { /* token scaduto o rete: si riprova al prossimo giro */ }
+    }, 2000);
+    dlg.addEventListener('close', () => clearInterval(catturaTimer), { once: true });
+  }
+  const render0 = () => render();
+
   function renderConsigli() {
     const t = ctx.stampato.templateInfo; const box = $('#consigli-template');
     if (!t) { box.hidden = true; return; }
@@ -150,7 +197,7 @@ export function initPagine(ctx) {
       const target = p.target && p.target_hash === p.immagine;
       return `<article class="card pagina-card ${p.immagine ? '' : 'vuota'}" data-id="${p.id}">
         <div class="thumb" ${p.immagine ? `style="background-image:url('/uploads/${esc(p.immagine)}')"` : ''}><span class="num">${p.ordine}</span>
-          ${p.immagine ? '' : `<label class="btn carica">${ic('upload')} Carica immagine<input type="file" accept="image/*" hidden data-sost></label>`}</div>
+          ${p.immagine ? '' : `<label class="btn carica">${ic('upload')} Carica immagine<input type="file" accept="image/*" hidden data-sost></label><button class="btn carica tel" data-tel>${ic('telefono')} Dal telefono</button>`}</div>
         <div class="corpo">
           <input value="${esc(p.titolo)}" data-titolo title="Titolo della pagina">
           <div class="badges">${p.immagine ? `<span class="badge ${q.cls}" title="Stima di tracciabilità">qualità ${q.testo}</span>
@@ -160,6 +207,7 @@ export function initPagine(ctx) {
             <button data-su title="Sposta prima">${ic('indietro')}</button>
             <button data-giu title="Sposta dopo">${ic('avanti')}</button>
             ${p.immagine ? `<label class="btn" title="Sostituisci immagine">${ic('aggiorna')}<input type="file" accept="image/*" hidden data-sost></label>` : ''}
+            ${p.immagine ? `<button data-tel title="Fotografa dal telefono (sostituisce l’immagine)">${ic('telefono')}</button>` : ''}
             <a class="btn" href="#" data-contenuti title="Vai ai contenuti di questa pagina">${ic('cubo')}</a>
             <button class="pericolo" data-del title="Elimina pagina" style="margin-left:auto">${ic('cestino')}</button>
           </div>
@@ -173,6 +221,7 @@ export function initPagine(ctx) {
       });
       $('[data-su]', card).addEventListener('click', () => sposta(p, -1));
       $('[data-giu]', card).addEventListener('click', () => sposta(p, 1));
+      $$('[data-tel]', card).forEach((b) => b.addEventListener('click', () => apriCattura(p)));
       $$('[data-sost]', card).forEach((i) => i.addEventListener('change', (e) => { if (e.target.files[0]) sostituisci(p, e.target.files[0]); }));
       $('[data-contenuti]', card).addEventListener('click', (e) => { e.preventDefault(); ctx.vai('contenuti', { p: p.id }); });
       $('[data-del]', card).addEventListener('click', async () => {

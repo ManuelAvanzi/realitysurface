@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>REALITYPAPER — fotografa la pagina</title>
+<link rel="stylesheet" href="/static/css/rp.css">
+<style>
+  body { display: flex; flex-direction: column; min-height: 100%; }
+  .barra .logo { font-size: 14px; }
+  main { flex: 1; padding: 14px; display: flex; flex-direction: column; gap: 12px; max-width: 640px; width: 100%; margin: 0 auto; }
+  h2 { font-size: 17px; }
+  .grandi { display: grid; gap: 10px; }
+  .grandi .btn { justify-content: center; padding: 16px; font-size: 16px; }
+  .grandi .btn svg.ic { width: 22px; height: 22px; }
+  .tappa { position: relative; width: 100%; background: #000; border-radius: var(--raggio); overflow: hidden; touch-action: none; }
+  .tappa canvas { display: block; width: 100%; height: auto; }
+  .tappa canvas.sopra { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .azioni { display: flex; gap: 8px; flex-wrap: wrap; }
+  .azioni .btn, .azioni button { flex: 1; justify-content: center; padding: 12px; }
+  .esito img { width: 100%; border-radius: var(--raggio); border: 1px solid var(--bordo); }
+  .errore { color: var(--err); }
+  footer { padding: 10px 14px; color: var(--testo2); font-size: 11px; text-align: center; }
+</style>
+</head>
+<body>
+<header class="barra"><span class="logo">REALITY<b>PAPER</b></span><span class="spazio"></span><span class="badge" id="badge-stato">cattura</span></header>
+<main id="main"><p class="muto">Carico…</p></main>
+<footer>La foto viene raddrizzata sul telefono e caricata nel tuo stampato. Il link vale 30 minuti.</footer>
+<script type="module" src="/static/js/cattura.js"></script>
+</body>
+</html>

@@ -94,6 +94,16 @@ aggiungiColonna('pagine', 'qualita', 'REAL');   // 0-100: stima di tracciabilit√
 aggiungiColonna('stampati', 'template', 'TEXT');                       // id del template di partenza (server/template.js)
 aggiungiColonna('stampati', 'impostazioni', "TEXT NOT NULL DEFAULT '{}'"); // JSON: es. plastico {riferimento, scala, offset}
 
+// Token di cattura: il telefono fotografa la pagina e la carica senza login (v0.4).
+db.exec(`CREATE TABLE IF NOT EXISTS catture (
+  token TEXT PRIMARY KEY,
+  stampato_id INTEGER NOT NULL REFERENCES stampati(id) ON DELETE CASCADE,
+  pagina_id INTEGER REFERENCES pagine(id) ON DELETE CASCADE,
+  utente_id INTEGER REFERENCES utenti(id) ON DELETE CASCADE,
+  creato TEXT NOT NULL DEFAULT (datetime('now')),
+  usato TEXT
+)`);
+
 const ALFABETO = 'abcdefghijkmnpqrstuvwxyz23456789'; // senza caratteri ambigui (l, o, 0, 1)
 export function nuovoQrId(len = 7) {
   let s = '';

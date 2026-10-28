@@ -3,6 +3,7 @@ import express from 'express';
 import multer from 'multer';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import QRCode from 'qrcode';
 import { db, UPLOADS_DIR, TIPI_STAMPATO, nuovoQrId, slugUnico } from '../db.js';
 import { richiediLogin, utenteDaRichiesta } from '../auth.js';
@@ -99,6 +100,47 @@ api.get('/viewer/:slug', (req, res) => {
 });
 
 // Da qui in poi: solo utenti loggati.
+// ---------- cattura dal telefono (pubblico: autenticato dal token, valido 30 minuti) ----------
+const CATTURA_MINUTI = 30;
+function cattura(token) {
+  db.prepare(`DELETE FROM catture WHERE creato < datetime('now', '-1 day')`).run();
+  const c = db.prepare(`SELECT c.*, s.titolo AS stampato_titolo, s.larghezza_mm, s.altezza_mm, p.titolo AS pagina_titolo, p.ordine, p.immagine,
+      (julianday('now') - julianday(c.creato)) * 1440 AS eta
+    FROM catture c JOIN stampati s ON s.id = c.stampato_id LEFT JOIN pagine p ON p.id = c.pagina_id WHERE c.token = ?`).get(token);
+  if (!c) throw errore('Link di cattura non valido', 404);
+  if (c.eta > CATTURA_MINUTI) throw errore('Link di cattura scaduto: generane uno nuovo dall’editor', 410);
+  return c;
+}
+api.get('/cattura/:token', (req, res) => {
+  const c = cattura(req.params.token);
+  res.json({ stampato: c.stampato_titolo, pagina: c.pagina_titolo || 'nuova pagina', ordine: c.ordine, usato: !!c.usato, immagine: c.immagine,
+    minutiRestanti: Math.max(0, Math.round(CATTURA_MINUTI - c.eta)) });
+});
+// Il telefono manda la foto (già raddrizzata): finisce sulla pagina del token, o su una pagina nuova.
+const idStampatoDellaCattura = (req, res, next) => { req.params.id = String(cattura(req.params.token).stampato_id); next(); };
+api.post('/cattura/:token', idStampatoDellaCattura, upload.single('immagine'), (req, res) => {
+  const c = cattura(req.params.token);
+  if (!req.file) return res.status(400).json({ errore: 'Immagine mancante' });
+  let w = Number(req.body?.larghezza_px) || null, h = Number(req.body?.altezza_px) || null;
+  if (!w || !h) ({ w, h } = dimensioniImmagine(req.file.path));
+  const qualita = req.body?.qualita !== undefined ? Number(req.body.qualita) : null;
+  let pid = c.pagina_id;
+  if (pid && !db.prepare('SELECT 1 FROM pagine WHERE id = ?').get(pid)) pid = null;
+  if (pid) {
+    const p = db.prepare('SELECT * FROM pagine WHERE id = ?').get(pid);
+    rimuoviFile(p.immagine); rimuoviFile(p.target);
+    db.prepare(`UPDATE pagine SET immagine = ?, larghezza_px = ?, altezza_px = ?, target = NULL, target_hash = NULL, qualita = ?,
+      updated_at = datetime('now') WHERE id = ?`).run(rel(req.file.path), w, h, qualita, pid);
+  } else {
+    const max = db.prepare('SELECT COALESCE(MAX(ordine), 0) AS m FROM pagine WHERE stampato_id = ?').get(c.stampato_id).m;
+    pid = db.prepare(`INSERT INTO pagine (stampato_id, ordine, titolo, qr_id, immagine, larghezza_px, altezza_px, scena, qualita)
+      VALUES (?, ?, ?, ?, ?, ?, ?, '{"elementi":[]}', ?)`).run(c.stampato_id, max + 1, req.body?.titolo || `Pagina ${max + 1}`, nuovoQr(), rel(req.file.path), w, h, qualita).lastInsertRowid;
+  }
+  db.prepare(`UPDATE catture SET usato = datetime('now'), pagina_id = ? WHERE token = ?`).run(pid, c.token);
+  tocca(c.stampato_id);
+  res.status(201).json({ ok: true, pagina_id: pid, immagine: rel(req.file.path) });
+});
+
 api.use(richiediLogin);
 
 // ---------- stampati ----------
@@ -257,6 +299,42 @@ api.get('/pagine/:id/qr.:fmt', async (req, res) => {
   } else {
     res.type('image/png').send(await QRCode.toBuffer(url, { type: 'png', width: size, margin: 2, errorCorrectionLevel: 'M' }));
   }
+});
+
+// ---------- cattura dal telefono: creazione del token (proprietario) ----------
+/** Indirizzi da cui il telefono può raggiungere questo server: PUBLIC_URL (tunnel) e gli IP della rete locale. */
+function indirizziCattura(req) {
+  const porta = (req.get('host') || '').split(':')[1] || process.env.PORT || 5500;
+  const lan = [];
+  for (const lista of Object.values(os.networkInterfaces())) for (const i of lista || []) {
+    if (i.family === 'IPv4' && !i.internal && !i.address.startsWith('169.254')) lan.push(`http://${i.address}:${porta}`);
+  }
+  const pubblico = process.env.PUBLIC_URL ? process.env.PUBLIC_URL.replace(/\/+$/, '') : null;
+  const base = [];
+  if (pubblico) base.push({ url: pubblico, tipo: 'tunnel', nome: 'Indirizzo pubblico (PUBLIC_URL)' });
+  for (const u of lan) base.push({ url: u, tipo: 'lan', nome: `Rete locale ${u.replace(/^https?:\/\//, '')}` });
+  if (!base.length) base.push({ url: urlPubblico(req), tipo: 'locale', nome: 'Questo PC' });
+  return base;
+}
+api.post('/stampati/:id/cattura', (req, res) => {
+  const s = stampato(req.params.id, req);
+  const pid = req.body?.pagina_id ? pagina(req.body.pagina_id, req).id : null;
+  let token = nuovoQrId(10);
+  while (db.prepare('SELECT 1 FROM catture WHERE token = ?').get(token)) token = nuovoQrId(10);
+  db.prepare('INSERT INTO catture (token, stampato_id, pagina_id, utente_id) VALUES (?, ?, ?, ?)').run(token, s.id, pid, req.utente.id);
+  res.status(201).json({ token, percorso: `/cattura/${token}`, basi: indirizziCattura(req), minuti: CATTURA_MINUTI });
+});
+api.get('/stampati/:id/cattura/:token', (req, res) => {
+  stampato(req.params.id, req);
+  const c = db.prepare('SELECT token, pagina_id, usato FROM catture WHERE token = ? AND stampato_id = ?').get(req.params.token, req.params.id);
+  if (!c) return res.status(404).json({ errore: 'Token non trovato' });
+  res.json({ usato: !!c.usato, pagina_id: c.pagina_id });
+});
+api.get('/stampati/:id/cattura/:token/qr.png', async (req, res) => {
+  stampato(req.params.id, req);
+  const basi = indirizziCattura(req).map((b) => b.url);
+  const base = basi.includes(req.query.base) ? req.query.base : basi[0];
+  res.type('image/png').send(await QRCode.toBuffer(`${base}/cattura/${req.params.token}`, { type: 'png', width: 320, margin: 2, errorCorrectionLevel: 'M' }));
 });
 
 // ---------- asset (GLB, immagini, audio, video) ----------

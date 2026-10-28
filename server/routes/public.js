@@ -13,6 +13,7 @@ publicRouter.get(['/', '/index.html'], pagina('index.html'));
 publicRouter.get(['/login', '/login/'], pagina('login.html'));
 publicRouter.get(['/editor', '/editor/'], pagina('editor/index.html'));
 publicRouter.get(['/v/:slug', '/v/:slug/:n'], pagina('viewer/index.html'));
+publicRouter.get('/cattura/:token', pagina('cattura.html')); // pagina per il telefono: fotografa, raddrizza, carica
 
 // /q/<id>: entra dal QR stampato → registra la scansione → viewer sulla pagina giusta.
 publicRouter.get('/q/:qr', (req, res) => {
