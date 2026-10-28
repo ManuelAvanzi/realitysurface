@@ -53,13 +53,13 @@ export const TEMPLATE = [
   {
     id: 'plastico', nome: 'Plastico', tipo: 'plastico', icona: 'plastico',
     larghezza_mm: 420, altezza_mm: 297,
-    descrizione: 'Modello fisico (stampato in 3D o costruito) appoggiato su un basamento stampato. Il basamento è il target; sopra ci camminano personaggi e compaiono etichette.',
+    descrizione: 'Il plastico lo costruisci con i tuoi strumenti (stampa 3D, Blender, cartone). Qui carichi il suo GLB, generi il basamento stampabile su cui appoggiarlo e ci fai vivere sopra personaggi, etichette e animazioni.',
     pagine: ['Basamento'],
     consigli: [
-      'Il telefono riconosce il BASAMENTO stampato (pianta, mappa, texture), non il modello 3D: disegnalo ricco di dettagli e lascialo visibile attorno al plastico.',
-      'Carica il modello del plastico (GLB) come riferimento: nell’editor lo vedi in trasparenza, nel viewer è invisibile ma nasconde i personaggi che gli passano dietro.',
-      'Un QR sul basamento o su un cartellino appoggiato: 30 mm bastano.',
-      'I personaggi hanno un percorso a punti: aggiungi i punti con “Aggiungi punto qui” dopo averli spostati col gizmo.',
+      'Primo passo: carica il GLB del plastico. Serve come riferimento nell’editor (trasparente) e come occlusore nel viewer: i personaggi spariscono dietro gli edifici veri.',
+      'Il telefono riconosce il BASAMENTO stampato, non il modello 3D: generalo dal GLB con “Genera basamento dal modello” (vista dall’alto + trama + cornice + QR) oppure carica una tua mappa o pianta.',
+      'Stampa il basamento a dimensione reale e appoggia il plastico sulla sua impronta: così la scena digitale combacia con quello fisico.',
+      'I personaggi hanno un percorso a punti: “Aggiungi punto”, poi sposta il punto col gizmo e premi Anteprima per vederli camminare.',
     ],
     scalaContenuti: 1,
     plastico: true,

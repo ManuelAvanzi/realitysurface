@@ -8,8 +8,8 @@ inquadra la pagina col telefono.
 1. Doppio click su `AVVIA.bat` (oppure `npm install` e `npm start`). Portale: http://localhost:5500
 2. Al primo avvio la piattaforma chiede di creare l'account amministratore. Gli account successivi
    si registrano da soli e vedono solo i propri stampati; l'amministratore li vede tutti.
-3. Nel portale: **Demo** → "Il libro dei pianeti" (3 pagine) oppure "Plastico del borgo" (basamento con
-   edifici, personaggi che camminano, etichette). I target vanno compilati al passo 2.
+3. Nel portale: **Demo** → "Il libro dei pianeti" (3 pagine), "Plastico del borgo" (basamento con edifici,
+   personaggi che camminano, etichette) o "Biglietto da visita Atelier Nord". I target vanno compilati al passo 2.
 
 ## Template
 **Nuovo stampato** parte da un template: biglietto da visita (85×55, fronte e retro), brochure pieghevole
@@ -18,12 +18,16 @@ Il template imposta formato e crea le pagine iniziali vuote: nel passo Pagine tr
 assegnate in ordine. Ogni template ha i suoi consigli di stampa e di tracciamento, mostrati nel passo Pagine.
 
 ## Plastico
-Il telefono riconosce il **basamento stampato** (una mappa, una pianta, una texture ricca di dettagli) su cui
-appoggi il modello fisico, stampato in 3D o costruito. Nel passo Contenuti il pannello **Plastico** ti fa
-caricare il GLB del modello come riferimento: nell'editor lo vedi in trasparenza per posizionare i contenuti,
-nel viewer AR è invisibile ma nasconde i personaggi che gli passano dietro. Gli elementi **Personaggio** sono
-omini procedurali che camminano lungo un **percorso a punti**: aggiungi un punto, spostalo col gizmo, premi
-Anteprima per vederli muovere. I **Blocchi** sono volumi colorati utili come edifici segnaposto.
+Il plastico lo costruisci con i tuoi strumenti (stampa 3D, Blender, cartone): REALITYPAPER non lo modella.
+Il flusso è:
+1. **Carica il GLB** del plastico nel passo Pagine (blocco "Modello del plastico"). Serve come riferimento
+   nell'editor (in trasparenza) e come occlusore nel viewer AR: i personaggi spariscono dietro gli edifici veri.
+2. **Genera basamento dal modello**: dal GLB viene prodotta la tavola stampabile (vista dall'alto, trama,
+   cornice, bussola, QR). È il basamento che il telefono riconosce. In alternativa carica una tua mappa o pianta.
+3. Stampa il basamento a dimensione reale e appoggia il plastico sulla sua impronta.
+4. Nel passo Contenuti popola la scena: **Personaggi** (omini procedurali) che camminano lungo un **percorso
+   a punti** (aggiungi un punto, spostalo col gizmo, premi Anteprima), **Blocchi** come volumi segnaposto,
+   etichette, modelli GLB animati.
 
 ## Il flusso di lavoro (editor a 4 passi)
 1. **Pagine** — trascina le grafiche definitive di stampa (JPG/PNG, anche più file insieme).

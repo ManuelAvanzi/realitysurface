@@ -1,6 +1,7 @@
 // Portale: elenco degli stampati dell'utente, creazione da template, demo.
 import { ic } from './icone.js';
 import { $, $$, api, esc, toast, richiediUtente, chipUtente, TIPI_ETICHETTA } from './comune.js';
+import { illustrazione } from './illustrazioni.js';
 
 const utente = await richiediUtente();
 chipUtente($('#utente'), utente);
@@ -25,7 +26,7 @@ async function carica() {
   }
   lista.innerHTML = rows.map((s) => `
     <article class="card stampato" data-id="${s.id}">
-      <a class="cover" href="/editor/?s=${s.id}" ${s.copertina ? `style="background-image:url('/uploads/${esc(s.copertina)}')"` : ''}>${s.copertina ? ic(s.tipo === 'plastico' ? 'plastico' : 'pagina') && '' : ic(s.tipo === 'plastico' ? 'plastico' : 'pagina')}
+      <a class="cover" href="/editor/?s=${s.id}" ${s.copertina ? `style="background-image:url('/uploads/${esc(s.copertina)}')"` : ''}>${s.copertina ? '' : illustrazione(s.template || s.tipo)}
         <span class="badge stato ${s.pubblicato ? 'ok' : 'warn'}" style="background:#0f1115cc">${s.pubblicato ? 'Pubblicato' : 'Bozza'}</span></a>
       <div class="corpo">
         <h3>${esc(s.titolo)}</h3>
@@ -57,7 +58,7 @@ let templateScelto = null;
 function renderTemplate() {
   $('#template').innerHTML = config.template.map((t) => `
     <button type="button" class="tpl ${templateScelto?.id === t.id ? 'attivo' : ''}" data-id="${t.id}">
-      ${ic(t.icona)}<b>${esc(t.nome)}</b><small>${t.larghezza_mm}×${t.altezza_mm} mm · ${t.pagine.length} ${t.pagine.length === 1 ? 'pagina' : 'pagine'}</small>
+      <span class="scatola">${illustrazione(t.id)}</span><b>${esc(t.nome)}</b><small>${t.larghezza_mm}×${t.altezza_mm} mm · ${t.pagine.length} ${t.pagine.length === 1 ? 'pagina' : 'pagine'}</small>
     </button>`).join('');
   $$('#template .tpl').forEach((b) => b.addEventListener('click', () => scegliTemplate(config.template.find((t) => t.id === b.dataset.id))));
 }

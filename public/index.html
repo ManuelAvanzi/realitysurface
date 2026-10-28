@@ -18,8 +18,9 @@
   .griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
   .card.stampato { overflow: hidden; display: flex; flex-direction: column; }
   .cover { aspect-ratio: 4 / 3; background: #0b0d12 center / cover no-repeat; border-bottom: 1px solid var(--bordo); display: grid; place-items: center; color: #3b4252; position: relative; }
-  .cover svg.ic { width: 42px; height: 42px; }
-  .cover[style] svg.ic { display: none; }
+  .cover:not([style]) { background: #fff; }
+  .cover svg.ill { width: 100%; height: 100%; }
+  .cover[style] svg.ill { display: none; }
   .cover .stato { position: absolute; top: 10px; left: 10px; }
   .corpo { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
   .corpo h3 { font-size: 15px; }
@@ -31,13 +32,17 @@
   .azioni { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
   .azioni button, .azioni .btn { justify-content: center; }
   .vuoto { padding: 48px; text-align: center; color: var(--testo2); border: 1px dashed var(--bordo); border-radius: var(--raggio); }
-  dialog.larga { max-width: 760px; }
-  .template { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 10px; }
-  .tpl { flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; text-align: left; white-space: normal; }
-  .tpl svg.ic { width: 22px; height: 22px; color: var(--accento2); }
-  .tpl b { font-size: 13px; }
+  dialog.larga { max-width: 1040px; }
+  .template { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(140px, 1fr); gap: 12px; margin: 6px 0 10px; overflow-x: auto; padding-bottom: 4px; }
+  .tpl { flex-direction: column; align-items: center; gap: 2px; padding: 0; text-align: center; white-space: normal; background: transparent; border: 0; }
+  .tpl:hover { background: transparent; }
+  .tpl .scatola { width: 100%; aspect-ratio: 1 / 1; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; display: grid; place-items: center; overflow: hidden; transition: box-shadow .15s, border-color .15s; }
+  .tpl:hover .scatola { box-shadow: 0 6px 22px #0006; }
+  .tpl .scatola svg.ill { width: 100%; height: 100%; }
+  .tpl b { font-size: 14px; margin-top: 8px; color: var(--testo); }
   .tpl small { color: var(--testo2); font-size: 11px; }
-  .tpl.attivo { border-color: var(--accento); background: #ff590014; }
+  .tpl.attivo .scatola { border: 2px solid var(--accento); box-shadow: 0 0 0 3px #ff590033; }
+  .tpl.attivo b { color: var(--accento2); }
   #tpl-desc p { margin: 4px 0; font-size: 13px; }
   .dialog-azioni { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; align-items: center; }
   .dialog-azioni label { margin: 0 auto 0 0; display: flex; align-items: center; gap: 6px; }
@@ -102,6 +107,7 @@
   <div class="demo-lista">
     <button data-demo="pianeti"><span><b>Il libro dei pianeti</b><small>3 pagine di libro: Marte, Giove, Saturno con sfere animate, lune e anelli.</small></span></button>
     <button data-demo="plastico"><span><b>Plastico del borgo</b><small>Basamento A3 con mappa del paese: edifici come volumi, 4 personaggi che camminano, etichette.</small></span></button>
+    <button data-demo="biglietto"><span><b>Biglietto da visita Atelier Nord</b><small>Fronte e retro 85×55: logo 3D che fluttua, mini plastico, personaggio che cammina, QR sul retro.</small></span></button>
   </div>
   <div class="dialog-azioni"><button id="demo-annulla">Chiudi</button></div>
 </dialog>

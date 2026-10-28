@@ -68,11 +68,16 @@ REALITYPAPER/
   public/js/scena.js   MODULO CONDIVISO editor/viewer: JSON scena -> three.js (glb+clip, sfera, testo, immagine, personaggio procedurale,
                        blocco); anim rotazione/fluttua/orbita/PERCORSO (punti, velocita, loop, orienta, offsetRot); animaElemento();
                        costruisciRiferimento(impostazioni, 'editor'|'viewer') = GLB del plastico fantasma / occlusore (colorWrite false)
+  public/js/illustrazioni.js  mockup ISOMETRICI schematici dei prodotti su fondo bianco (stile catalogo Pixartprinting, richiesto dall'utente):
+                       primitive box()/righe()/patch() + cubo AR arancione; picker template a schede bianche e copertine vuote
+  public/editor/basamento.js  generaBasamento(): vista dall'alto ortografica del GLB (three.js offscreen, colori per quota, spigoli) su tavola
+                       decorata (griglia, punti, anelli, cornice, titolo, bussola, QR) -> PNG = immagine/target della pagina Basamento
   public/js/three-shim.js  "three" dell'importmap = three.module.js + sRGBEncoding (MindAR lo importa ancora)
   public/login.html    accesso/registrazione (al primo avvio forza la registrazione dell'admin)
   public/editor/editor.js   SHELL A PASSI (?passo=pagine|target|contenuti|pubblica, ?p=<pagina>): ctx condiviso, stepper con stato
-  public/editor/pagine.js   passo 1: consigli del template, drag&drop multiplo (riempie prima le pagine vuote del template), titoli, ordine,
-                       sostituisci/carica immagine, pagina vuota, qualita (calcolata nel browser)
+  public/editor/pagine.js   passo 1: consigli del template, blocco PLASTICO (carica GLB -> impostazioni.riferimento, ingombro, rotazione,
+                       "Genera basamento dal modello"), drag&drop multiplo (riempie prima le pagine vuote), titoli, ordine, sostituisci/carica
+                       immagine, pagina vuota, qualita (calcolata nel browser)
   public/editor/target.js   passo 2: tabella pagine + compila .mind (MindAR Compiler nel browser), ?compila=1 compila i mancanti
   public/editor/scena3d.js  passo 3: editor three.js (OrbitControls + TransformControls), elementi, proprieta, asset, Salva/Ctrl+S;
                        pannello Plastico (GLB riferimento, ingombro, offset, rotazione); percorsi: lista punti, punto attivo spostato col gizmo,
@@ -80,10 +85,19 @@ REALITYPAPER/
   public/editor/pubblica.js passo 4: interruttore Pubblicato/Bozza, link viewer, avvisi, QR per pagina (PNG/SVG), foglio di stampa
   public/viewer/       viewer: MindARThree (anchor 0) -> fallback 3D (OrbitControls); 403 "non pubblicato"; proprietario vede anteprima
   tools/demo-pianeti.mjs  genera "Il libro dei pianeti" (3 pagine PNG con QR incorporato + texture + scene) con node-canvas
+  tools/demo-biglietto.mjs genera "Biglietto Atelier Nord": fronte/retro 85x55 (1004x650) con trama isometrica, logo, QR sul retro;
+                       scena con mini plastico a blocchi, logo-sfera orbitante, personaggio in cammino
   tools/demo-plastico.mjs genera "Plastico del borgo": basamento A3 (mappa, strade, fiume, impronte edifici, QR) + 9 blocchi, campanile,
                        3 etichette, 4 personaggi con percorsi
   uploads/<id stampato>/  immagini pagina, .mind, texture, GLB      data/  database
 ```
+
+**Stato 29/10/2026: v0.3.1** illustrazioni SVG delle superfici nel picker template e nelle copertine; FLUSSO PLASTICO ribaltato:
+il plastico si costruisce ALTROVE (stampa 3D, Blender), qui si carica il GLB e si genera il basamento stampabile dal modello
+(public/editor/basamento.js), oppure si carica una mappa propria; demo biglietto da visita. Collaudato con un GLB di prova generato
+(scratchpad make-test-glb.mjs, senza normali -> computeVertexNormals). Commit da fare.
+Geolocalizzazione stile Aero: NON implementata; risposta data all'utente (GPS+bussola fattibile nel browser con precisione di metri,
+VPS preciso non disponibile sul web; alternativa robusta = targa stampata sul posto). Candidato template "Luogo" per v0.4.
 
 **Stato 28/10/2026 notte: v0.3-template FATTA e collaudata**: catalogo template nella finestra Nuovo stampato (pagine iniziali vuote
 da riempire col drag&drop, consigli nel passo Pagine), tipo "plastico" con basamento stampato come target + GLB di riferimento
@@ -124,7 +138,8 @@ tracking) → `AR Quick Look` (iPhone, USDZ generato dal GLB) → `3D viewer non
 - v0.3 FATTA (parte template): template di stampati, plastico con riferimento GLB/occlusore, personaggi NPC con percorso, blocchi.
 - v0.3 resto: prova AR dal telefono; QR unico per tutto lo stampato (piu' target in un .mind); audio/video; GLB NPC con clip Walk;
   WebXR hit-test (Quest/Android), USDZ iPhone.
-- v0.4: galleria pubblica, statistiche scansioni per periodo, deploy (Render/VPS + dominio).
+- v0.4: template "Luogo" (installazione geolocalizzata: GPS + bussola + altezza, raggio di attivazione, fallback targa stampata),
+  galleria pubblica, statistiche scansioni per periodo, deploy (Render/VPS + dominio).
 
 ## Gotcha / note di sviluppo
 
@@ -141,7 +156,8 @@ tracking) → `AR Quick Look` (iPhone, USDZ generato dal GLB) → `3D viewer non
 - node-canvas `putImageData` non compone con lo sfondo: disegnare su canvas temporaneo e poi `drawImage`.
 - `button[hidden]` resta visibile perche' rp.css gli da' display:inline-flex -> c'e' `[hidden]{display:none!important}` globale.
 - Il pannello browser NON puo' caricare file: l'upload pagine si collauda via curl con cookie (-c/-b), vedi sessione 28/10.
-- Plastico: il tracking e' SEMPRE del basamento stampato (immagine), mai del modello 3D; il GLB serve solo come occlusore/riferimento.
+- Plastico: il tracking e' SEMPRE del basamento stampato (immagine), mai del modello 3D; il GLB serve come occlusore/riferimento e
+  come sorgente del basamento generato. GLB senza NORMAL rendono nero con materiali illuminati: computeVertexNormals() prima.
 - Personaggio procedurale: in piedi lungo z, guarda verso +x (naso); il percorso ruota attorno a z con atan2(dy,dx)+offsetRot.
   Per un GLB (y-up, davanti +z) dopo il wrap x=90 il davanti e' -y: offsetRot 90 lo allinea.
 - Convenzione sfera: asse polare lungo z (rotation.x = 90°) così `anim.rotazione.asse:'z'` = pianeta che gira in piano.

@@ -120,3 +120,13 @@ summary { cursor: pointer; font-size: 12px; color: var(--testo2); }
 .punto.attivo { border-color: var(--accento); background: var(--bg3); }
 .punto small { flex: 1; }
 #plastico select, #plastico input { font-size: 12px; }
+
+.blocco-plastico { display: flex; gap: 16px; padding: 14px; align-items: stretch; }
+.blocco-plastico .ill-box { width: 180px; flex: none; background: #fff; border-radius: 6px; display: grid; place-items: center; overflow: hidden; }
+.blocco-plastico .ill-box svg { width: 100%; height: auto; }
+.blocco-plastico .corpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.blocco-plastico h3 { font-size: 15px; }
+.blocco-plastico p { margin: 0; font-size: 13px; }
+.riga.avvolgi { flex-wrap: wrap; align-items: flex-end; }
+.riga.avvolgi > .fisso { flex: none; }
+.riga.avvolgi label { margin-top: 0; }

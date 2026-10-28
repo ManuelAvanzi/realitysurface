@@ -284,6 +284,12 @@ api.post('/demo/pianeti', async (req, res, next) => {
     res.status(201).json(await creaDemoPianeti({ baseUrl: urlPubblico(req), utenteId: req.utente.id }));
   } catch (e) { next(e); }
 });
+api.post('/demo/biglietto', async (req, res, next) => {
+  try {
+    const { creaDemoBiglietto } = await import('../../tools/demo-biglietto.mjs');
+    res.status(201).json(await creaDemoBiglietto({ baseUrl: urlPubblico(req), utenteId: req.utente.id }));
+  } catch (e) { next(e); }
+});
 api.post('/demo/plastico', async (req, res, next) => {
   try {
     const { creaDemoPlastico } = await import('../../tools/demo-plastico.mjs');

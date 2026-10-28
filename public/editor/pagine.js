@@ -1,6 +1,7 @@
 // Passo 1 — Pagine: caricamento multiplo, ordine, titoli, qualità dell'immagine, consigli del template.
 import { ic } from '../js/icone.js';
 import { $, $$, api, esc, toast, dimensioniFile, qualitaImmagine, etichettaQualita } from '../js/comune.js';
+import { illustrazione } from '../js/illustrazioni.js';
 
 export function initPagine(ctx) {
   const griglia = $('#griglia-pagine');
@@ -66,6 +67,69 @@ export function initPagine(ctx) {
     await ctx.ricarica(); render();
   }
 
+  // ---------- plastico: modello GLB + basamento generato ----------
+  function renderPlastico() {
+    const box = $('#blocco-plastico');
+    if (!ctx.stampato.templateInfo?.plastico && ctx.stampato.tipo !== 'plastico') { box.hidden = true; return; }
+    box.hidden = false;
+    const imp = ctx.stampato.impostazioni || {};
+    const glb = ctx.stampato.asset.filter((a) => a.tipo === 'glb');
+    const corrente = glb.find((a) => a.percorso === imp.riferimento);
+    box.innerHTML = `<div class="ill-box">${illustrazione('plastico')}</div>
+      <div class="corpo">
+        <h3>Modello del plastico</h3>
+        <p class="muto">Il plastico lo costruisci con i tuoi strumenti (stampa 3D, Blender, cartone). Qui carichi il suo GLB: serve come riferimento nell’editor, come occlusore nel viewer e per generare il basamento stampabile, cioè l’immagine che il telefono riconosce.</p>
+        <div class="riga avvolgi">
+          <div class="fisso"><label>GLB caricato</label><select id="pl-glb"><option value="">nessuno</option>${glb.map((a) => `<option value="${esc(a.percorso)}" ${imp.riferimento === a.percorso ? 'selected' : ''}>${esc(a.nome)}</option>`).join('')}</select></div>
+          <label class="btn fisso" style="align-self:flex-end">${ic('upload')} Carica GLB<input type="file" accept=".glb,.gltf" hidden id="pl-file"></label>
+          <div class="fisso" style="width:120px"><label>Ingombro (0-1)</label><input type="number" step="0.05" min="0.1" max="1" id="pl-larg" value="${imp.larghezza ?? 0.6}"></div>
+          <div class="fisso" style="width:110px"><label>Rotazione z</label><input type="number" step="15" id="pl-rot" value="${imp.rotazione ?? 0}"></div>
+          <button class="primario fisso" id="pl-genera" style="align-self:flex-end" ${corrente ? '' : 'disabled'}>${ic('compila')} Genera basamento dal modello</button>
+        </div>
+        <div class="muto piccolo" id="pl-stato">${corrente ? `Modello: ${esc(corrente.nome)} (${(corrente.dimensione / 1024 / 1024).toFixed(1)} MB). Il basamento generato diventa l’immagine della pagina “Basamento”.` : 'Nessun modello: carica il GLB del plastico, oppure trascina sotto una tua mappa o pianta come basamento.'}</div>
+      </div>`;
+    $('#pl-file').addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const fd = new FormData(); fd.append('file', file);
+      const t = toast('Carico il modello…', '', 60000);
+      try {
+        const a = await api(`/api/stampati/${ctx.id}/asset`, { method: 'POST', body: fd });
+        ctx.stampato.asset.push(a);
+        await salvaImpostazioni({ riferimento: a.percorso });
+        toast(`Modello ${a.nome} caricato`, 'ok');
+      } catch (err) { toast(err.message, 'err'); }
+      t.remove(); e.target.value = ''; renderPlastico();
+    });
+    $('#pl-glb').addEventListener('change', async (e) => { await salvaImpostazioni({ riferimento: e.target.value }); renderPlastico(); });
+    $('#pl-larg').addEventListener('change', (e) => salvaImpostazioni({ larghezza: Number(e.target.value) || 0.6 }));
+    $('#pl-rot').addEventListener('change', (e) => salvaImpostazioni({ rotazione: Number(e.target.value) || 0 }));
+    $('#pl-genera').addEventListener('click', generaBasamentoPagina);
+  }
+  async function salvaImpostazioni(b) {
+    const s = await api(`/api/stampati/${ctx.id}/impostazioni`, { method: 'PUT', body: JSON.stringify(b) });
+    ctx.stampato.impostazioni = s.impostazioni;
+  }
+  async function generaBasamentoPagina() {
+    const imp = ctx.stampato.impostazioni || {};
+    if (!imp.riferimento) return toast('Carica prima il GLB del plastico', 'err');
+    let p = ctx.stampato.pagine.find((x) => !x.immagine) || ctx.stampato.pagine[0];
+    if (!p) { await api(`/api/stampati/${ctx.id}/pagine`, { method: 'POST', body: JSON.stringify({ titolo: 'Basamento' }) }); await ctx.ricarica(); p = ctx.stampato.pagine[0]; }
+    if (p.immagine && !confirm(`Sostituire l’immagine della pagina “${p.titolo}” con il basamento generato? Il target andrà ricompilato.`)) return;
+    const btn = $('#pl-genera'); btn.disabled = true; $('#pl-stato').textContent = 'Genero il basamento: vista dall’alto del modello, trama, cornice e QR…';
+    try {
+      const { generaBasamento } = await import('./basamento.js');
+      const { blob, w, h } = await generaBasamento({
+        glbUrl: `/uploads/${imp.riferimento}`, wMm: ctx.stampato.larghezza_mm, hMm: ctx.stampato.altezza_mm,
+        larghezza: imp.larghezza ?? 0.6, rotazione: imp.rotazione ?? 0, offsetX: imp.offsetX ?? 0, offsetY: imp.offsetY ?? 0,
+        titolo: ctx.stampato.titolo, qrUrl: `/api/pagine/${p.id}/qr.png?size=600`,
+      });
+      const file = new File([blob], `basamento-${ctx.stampato.slug}.png`, { type: 'image/png' });
+      await api(`/api/pagine/${p.id}/immagine`, { method: 'POST', body: await datiFile(file) });
+      await ctx.ricarica(); render();
+      toast('Basamento generato: ora compila il target', 'ok');
+    } catch (e) { console.error(e); toast(`Generazione fallita: ${e.message || e}`, 'err'); btn.disabled = false; }
+  }
+
   function renderConsigli() {
     const t = ctx.stampato.templateInfo; const box = $('#consigli-template');
     if (!t) { box.hidden = true; return; }
@@ -74,7 +138,7 @@ export function initPagine(ctx) {
   }
 
   function render() {
-    renderConsigli();
+    renderConsigli(); renderPlastico();
     const pagine = ctx.stampato.pagine;
     const senza = pagine.filter((p) => !p.immagine).length;
     const scarse = pagine.filter((p) => p.qualita != null && p.qualita < 35).length;
