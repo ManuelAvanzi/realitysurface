@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REALITYPAPER — i tuoi stampati</title>
+<link rel="stylesheet" href="/static/css/rp.css">
+<style>
+  .contenuto { max-width: 1180px; margin: 0 auto; padding: 24px 16px 60px; }
+  .intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .intro h1 { font-size: 22px; }
+  .intro p { margin: 6px 0 0; color: var(--testo2); max-width: 640px; }
+  .passi-intro { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 0 24px; }
+  .passi-intro .card { padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .passi-intro .num { width: 26px; height: 26px; border-radius: 50%; background: var(--accento); color: #fff; display: grid; place-items: center; font-weight: 600; flex: none; font-size: 13px; }
+  .passi-intro b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .passi-intro span { color: var(--testo2); font-size: 12px; }
+  .griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .card.stampato { overflow: hidden; display: flex; flex-direction: column; }
+  .cover { aspect-ratio: 4 / 3; background: #0b0d12 center / cover no-repeat; border-bottom: 1px solid var(--bordo); display: grid; place-items: center; color: #3b4252; position: relative; }
+  .cover svg.ic { width: 42px; height: 42px; }
+  .cover .stato { position: absolute; top: 10px; left: 10px; }
+  .corpo { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .corpo h3 { font-size: 15px; }
+  .meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .avanzamento { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .avanzamento i { height: 4px; border-radius: 2px; background: var(--bg3); display: block; }
+  .avanzamento i.fatto { background: var(--ok); }
+  .avanzamento i.parziale { background: var(--warn); }
+  .azioni { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
+  .azioni button, .azioni .btn { justify-content: center; }
+  .vuoto { padding: 48px; text-align: center; color: var(--testo2); border: 1px dashed var(--bordo); border-radius: var(--raggio); }
+  .formati { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .formati button { padding: 4px 9px; font-size: 12px; }
+  .dialog-azioni { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+  @media (max-width: 800px) { .passi-intro { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<header class="barra">
+  <div class="logo"><span id="logo-ic"></span>REALITY<b>PAPER</b></div>
+  <span class="muto piccolo">AR sopra la carta stampata</span>
+  <div class="spazio"></div>
+  <button id="btn-demo" title="Crea un libro demo sui pianeti con 3 pagine pronte"></button>
+  <button class="primario" id="btn-nuovo"></button>
+  <div id="utente" class="riga" style="flex:none"></div>
+</header>
+
+<main class="contenuto">
+  <div class="intro">
+    <div>
+      <h1>I tuoi stampati</h1>
+      <p>Uno “stampato” è un libro, un biglietto da visita, una brochure o una copertina. Ogni pagina ha un QR da stampare e una scena 3D che compare sopra la carta quando la inquadri col telefono.</p>
+    </div>
+  </div>
+  <div class="passi-intro">
+    <div class="card"><span class="num">1</span><div><b>Pagine</b><span>Carica le grafiche definitive di stampa.</span></div></div>
+    <div class="card"><span class="num">2</span><div><b>Target</b><span>Compila il riconoscimento di ogni pagina.</span></div></div>
+    <div class="card"><span class="num">3</span><div><b>Contenuti</b><span>Posiziona modelli 3D, testi e immagini.</span></div></div>
+    <div class="card"><span class="num">4</span><div><b>Pubblica</b><span>Attiva il viewer e scarica i QR.</span></div></div>
+  </div>
+  <div id="lista" class="griglia"></div>
+</main>
+
+<dialog id="dlg-nuovo">
+  <h2>Nuovo stampato</h2>
+  <label>Titolo</label>
+  <input id="n-titolo" placeholder="Es. Il libro dei pianeti" autofocus>
+  <div class="riga">
+    <div><label>Tipo</label><select id="n-tipo"></select></div>
+    <div><label>Larghezza (mm)</label><input id="n-w" type="number" value="210"></div>
+    <div><label>Altezza (mm)</label><input id="n-h" type="number" value="297"></div>
+  </div>
+  <div class="formati" id="formati"></div>
+  <label>Descrizione (facoltativa)</label>
+  <textarea id="n-desc" rows="2"></textarea>
+  <div class="dialog-azioni">
+    <button id="n-annulla">Annulla</button>
+    <button class="primario" id="n-crea">Crea e apri l'editor</button>
+  </div>
+</dialog>
+
+<script type="module" src="/static/js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REALITYPAPER — editor</title>
+<link rel="stylesheet" href="/static/css/rp.css">
+<link rel="stylesheet" href="/static/editor/editor.css">
+<script type="importmap">{"imports":{"three":"/static/js/three-shim.js","three/addons/":"/vendor/three/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="app">
+  <header class="barra">
+    <a href="/" class="btn icona" title="Torna ai tuoi stampati" id="btn-home"></a>
+    <input class="titolo" id="titolo-stampato" title="Titolo dello stampato (modificabile)">
+    <span class="badge" id="badge-formato"></span>
+    <nav class="stepper" id="stepper"></nav>
+    <div class="spazio"></div>
+    <button class="primario" id="btn-salva" hidden title="Salva la scena (Ctrl+S)"></button>
+    <div id="utente" class="riga" style="flex:none"></div>
+  </header>
+
+  <!-- Passo 1: pagine -->
+  <section class="passo" id="passo-pagine" hidden>
+    <div class="colonna">
+      <div class="testata">
+        <div><h2>1. Pagine</h2><p class="muto">Carica la grafica definitiva di ogni pagina (JPG o PNG, come andrà in stampa). Ogni pagina avrà il suo QR e la sua scena 3D.</p></div>
+      </div>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="file-pagine" accept="image/*" multiple hidden>
+        <span id="dropzone-ic"></span>
+        <b>Trascina qui le immagini delle pagine</b>
+        <span class="muto">oppure clicca per sceglierle · più file insieme, nell'ordine delle pagine</span>
+      </label>
+      <div class="muto piccolo consiglio" id="consiglio-pagine"></div>
+      <div id="griglia-pagine" class="griglia-pagine"></div>
+      <div class="piede"><button class="primario" id="avanti-target"></button></div>
+    </div>
+  </section>
+
+  <!-- Passo 2: target -->
+  <section class="passo" id="passo-target" hidden>
+    <div class="colonna">
+      <div class="testata">
+        <div><h2>2. Target di riconoscimento</h2><p class="muto">Per ogni pagina viene calcolato un “target” che permette al telefono di riconoscerla e agganciare la scena. Si fa qui, nel browser, una volta sola per immagine.</p></div>
+        <button class="primario" id="btn-compila-tutti"></button>
+      </div>
+      <div class="progress" id="progress-target" hidden><i></i></div>
+      <div class="muto piccolo" id="stato-compilazione"></div>
+      <table class="tabella" id="tabella-target"></table>
+      <div class="piede"><button id="indietro-pagine"></button><button class="primario" id="avanti-contenuti"></button></div>
+    </div>
+  </section>
+
+  <!-- Passo 3: contenuti (editor 3D) -->
+  <section class="passo contenuti" id="passo-contenuti" hidden>
+    <aside class="sinistra">
+      <h3>Pagine</h3>
+      <div class="pagine" id="pagine"></div>
+      <div class="muto piccolo">Scegli la pagina da arricchire. Le modifiche vanno salvate per ogni pagina.</div>
+    </aside>
+    <main id="viewport">
+      <div class="strumenti">
+        <button data-modo="translate" class="attivo" title="Sposta (W)"></button>
+        <button data-modo="rotate" title="Ruota (E)"></button>
+        <button data-modo="scale" title="Scala (R)"></button>
+        <button id="btn-vista" title="Vista dall’alto / prospettica"></button>
+      </div>
+      <div class="suggerimento">Click: seleziona · W/E/R: sposta/ruota/scala · Canc: elimina · Ctrl+D: duplica · Ctrl+S: salva</div>
+    </main>
+    <aside class="destra">
+      <h3>Aggiungi</h3>
+      <div class="aggiungi" id="aggiungi"></div>
+      <h3>Elementi</h3>
+      <div class="elementi" id="elementi"></div>
+      <h3>Proprietà</h3>
+      <div id="proprieta" class="vuoto">Seleziona un elemento</div>
+      <h3>Libreria asset</h3>
+      <label class="btn" style="justify-content:center" id="lbl-asset"><input type="file" id="file-asset" accept=".glb,.gltf,.png,.jpg,.jpeg,.webp" hidden></label>
+      <div id="asset"></div>
+      <div class="piede"><button class="primario" id="avanti-pubblica"></button></div>
+    </aside>
+  </section>
+
+  <!-- Passo 4: pubblica -->
+  <section class="passo" id="passo-pubblica" hidden>
+    <div class="colonna">
+      <div class="testata">
+        <div><h2>4. Pubblica e stampa i QR</h2><p class="muto">Quando lo stampato è pubblicato, i QR portano al viewer. Finché è in bozza i QR mostrano un avviso, ma tu puoi sempre vedere l'anteprima.</p></div>
+        <label class="interruttore"><input type="checkbox" id="chk-pubblicato"><span></span><b id="lbl-pubblicato">Bozza</b></label>
+      </div>
+      <div id="avvisi-pubblica"></div>
+      <div class="card blocco-link">
+        <div><label>Indirizzo pubblico del viewer</label><code id="link-pubblico"></code></div>
+        <div class="riga" style="flex:none">
+          <a class="btn" id="btn-anteprima" target="_blank"></a>
+          <a class="btn" id="btn-foglio" target="_blank"></a>
+        </div>
+      </div>
+      <h3 class="sezione">QR per pagina</h3>
+      <p class="muto piccolo">Ogni QR punta a un indirizzo di redirezione: puoi cambiare la scena anche dopo la stampa. Stampa a minimo 20 mm di lato.</p>
+      <div id="griglia-qr" class="griglia-qr"></div>
+      <div class="piede"><button id="indietro-contenuti"></button></div>
+    </div>
+  </section>
+</div>
+
+<script type="module" src="/static/editor/editor.js"></script>
+</body>
+</html>

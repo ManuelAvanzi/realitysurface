@@ -1,0 +1,109 @@
+/* Editor REALITYPAPER: shell a passi + editor 3D */
+body { overflow: hidden; }
+.app { display: grid; grid-template-rows: 52px 1fr; height: 100vh; }
+.barra input.titolo { width: 240px; background: transparent; border-color: transparent; font-weight: 600; }
+.barra input.titolo:hover, .barra input.titolo:focus { border-color: var(--bordo); background: var(--bg); }
+.chip-utente { color: var(--testo2); font-size: 12px; }
+
+/* stepper */
+.stepper { display: flex; gap: 4px; margin-left: 18px; }
+.stepper button { border-color: transparent; background: transparent; color: var(--testo2); padding: 6px 10px; }
+.stepper button:hover { background: var(--bg3); }
+.stepper button.attivo { color: #fff; background: var(--bg3); border-color: var(--bordo); }
+.stepper .num { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: var(--bg3); border: 1px solid var(--bordo); }
+.stepper button.fatto .num { background: var(--ok); color: #0f1115; border-color: var(--ok); }
+.stepper button.parziale .num { background: var(--warn); color: #0f1115; border-color: var(--warn); }
+.stepper button.attivo .num { outline: 2px solid var(--accento); outline-offset: 1px; }
+
+/* passi "a colonna" (pagine, target, pubblica) */
+.passo[hidden] { display: none !important; }
+.passo { overflow: auto; }
+.colonna { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; display: flex; flex-direction: column; gap: 14px; }
+.testata { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.colonna { width: 100%; min-width: 0; }
+.tabella td button { padding: 5px 8px; }
+.tabella td:last-child { white-space: nowrap; }
+.testata h2 { font-size: 20px; margin-bottom: 4px; }
+.testata p { margin: 0; max-width: 720px; }
+.piede { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; }
+.piede > :only-child { margin-left: auto; }
+h3.sezione { font-size: 14px; margin-top: 10px; }
+
+.dropzone { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 28px; border: 2px dashed var(--bordo); border-radius: var(--raggio); cursor: pointer; text-align: center; transition: border-color .15s, background .15s; }
+.dropzone:hover, .dropzone.sopra { border-color: var(--accento); background: #ff590010; }
+.dropzone svg.ic { width: 30px; height: 30px; color: var(--accento); }
+.consiglio { min-height: 16px; }
+
+.griglia-pagine { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.card.pagina-card { overflow: hidden; display: flex; flex-direction: column; }
+.pagina-card .thumb { aspect-ratio: 3 / 4; background: #0b0d12 center / contain no-repeat; border-bottom: 1px solid var(--bordo); position: relative; }
+.pagina-card .thumb .num { position: absolute; top: 8px; left: 8px; background: #0f1115cc; border-radius: 6px; padding: 2px 7px; font-size: 12px; font-weight: 600; }
+.pagina-card .thumb .caricamento { position: absolute; inset: 0; display: grid; place-items: center; background: #0f1115aa; }
+.pagina-card .corpo { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
+.pagina-card input { padding: 4px 6px; font-size: 13px; }
+.pagina-card .badges { display: flex; gap: 4px; flex-wrap: wrap; }
+.pagina-card .azioni { display: flex; gap: 4px; }
+.pagina-card .azioni button, .pagina-card .azioni .btn { padding: 4px 7px; font-size: 12px; }
+.badge.err { color: var(--err); border-color: #6b1f2e; }
+
+.tabella { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tabella th { text-align: left; color: var(--testo2); font-weight: 500; font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--bordo); }
+.tabella td { padding: 8px; border-bottom: 1px solid var(--bordo); vertical-align: middle; }
+.tabella .thumb { width: 42px; height: 56px; background: #0b0d12 center / cover; border-radius: 4px; border: 1px solid var(--bordo); }
+.tabella .progress { width: 140px; }
+
+.interruttore { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; margin: 0; color: var(--testo); font-size: 14px; }
+.interruttore input { display: none; }
+.interruttore span { width: 42px; height: 24px; border-radius: 12px; background: var(--bg3); border: 1px solid var(--bordo); position: relative; transition: background .15s; }
+.interruttore span::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
+.interruttore input:checked + span { background: var(--ok); border-color: var(--ok); }
+.interruttore input:checked + span::after { left: 21px; }
+
+.avviso { border: 1px solid #6b4a0e; background: #2a2214; color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: 13px; display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.avviso a { color: var(--accento2); margin-left: auto; }
+.blocco-link { padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.blocco-link code { display: block; color: var(--testo); word-break: break-all; }
+.griglia-qr { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.qr-card { padding: 12px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.qr-card img { width: 140px; height: 140px; background: #fff; border-radius: 8px; }
+.qr-card b { font-size: 13px; }
+.qr-card .riga { width: 100%; }
+.qr-card .riga .btn { justify-content: center; padding: 4px; font-size: 12px; }
+
+/* passo 3: editor 3D */
+.passo.contenuti { display: grid; grid-template-columns: 220px 1fr 320px; overflow: hidden; }
+aside { background: var(--bg2); border-right: 1px solid var(--bordo); overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+aside.destra { border-right: 0; border-left: 1px solid var(--bordo); }
+aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--testo2); margin: 6px 0 2px; }
+aside .piede { margin-top: auto; }
+aside .piede button { width: 100%; justify-content: center; }
+#viewport { position: relative; background: #0b0d12; overflow: hidden; }
+#viewport canvas { display: block; }
+.strumenti { position: absolute; top: 12px; left: 12px; display: flex; gap: 4px; background: #171a21cc; border: 1px solid var(--bordo); border-radius: 10px; padding: 4px; backdrop-filter: blur(6px); }
+.strumenti button { border-color: transparent; background: transparent; }
+.strumenti button.attivo { background: var(--accento); color: #fff; }
+.suggerimento { position: absolute; left: 12px; bottom: 12px; color: var(--testo2); font-size: 12px; background: #171a21cc; padding: 6px 10px; border-radius: 8px; }
+.pagine { display: flex; flex-direction: column; gap: 6px; }
+.pagina { display: flex; gap: 8px; align-items: center; padding: 6px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; }
+.pagina:hover { background: var(--bg3); }
+.pagina.attiva { border-color: var(--accento); background: var(--bg3); }
+.pagina .thumb { width: 40px; height: 52px; background: #0b0d12 center / cover; border-radius: 4px; border: 1px solid var(--bordo); flex: none; }
+.pagina .info { flex: 1; min-width: 0; }
+.pagina .info b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pagina .info small { color: var(--testo2); }
+.elementi { display: flex; flex-direction: column; gap: 3px; }
+.elemento { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
+.elemento:hover { background: var(--bg3); }
+.elemento.attivo { border-color: var(--accento); background: var(--bg3); }
+.elemento span { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.aggiungi { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.aggiungi button { justify-content: center; font-size: 12px; }
+.prop { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.prop input { padding: 5px 6px; font-size: 12px; }
+.asset { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 7px; font-size: 12px; }
+.asset:hover { background: var(--bg3); }
+.asset span { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.asset button { padding: 3px 7px; font-size: 11px; }
+.vuoto { color: var(--testo2); font-size: 12px; padding: 10px; border: 1px dashed var(--bordo); border-radius: 8px; text-align: center; }
+details { border: 1px solid var(--bordo); border-radius: 8px; padding: 6px 10px; }
+summary { cursor: pointer; font-size: 12px; color: var(--testo2); }

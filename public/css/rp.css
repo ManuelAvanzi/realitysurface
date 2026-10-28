@@ -1,0 +1,57 @@
+/* REALITYPAPER — stile condiviso (portale, editor, viewer). Icone SVG a tratto, niente emoji. */
+:root {
+  --bg: #0f1115; --bg2: #171a21; --bg3: #1f232c; --bordo: #2a2f3a;
+  --testo: #e6e8ee; --testo2: #9aa3b2; --accento: #ff5900; --accento2: #ff8a4c;
+  --ok: #3ddc84; --warn: #ffb020; --err: #ff5470;
+  --raggio: 10px; --font: Inter, Manrope, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--testo); font-family: var(--font); font-size: 14px; }
+a { color: var(--accento2); text-decoration: none; }
+button, .btn {
+  font: inherit; color: var(--testo); background: var(--bg3); border: 1px solid var(--bordo); border-radius: 8px;
+  padding: 7px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; line-height: 1.2; white-space: nowrap;
+}
+button:hover, .btn:hover { border-color: #3b4252; background: #262b36; }
+button.primario, .btn.primario { background: var(--accento); border-color: var(--accento); color: #fff; }
+button.primario:hover { background: #ff6a1a; }
+button.pericolo:hover { border-color: var(--err); color: var(--err); }
+button:disabled { opacity: .5; cursor: default; }
+button.icona { padding: 6px; }
+svg.ic { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+input, select, textarea {
+  font: inherit; color: var(--testo); background: var(--bg); border: 1px solid var(--bordo); border-radius: 7px; padding: 6px 8px; width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accento); }
+input[type=color] { padding: 2px; height: 30px; }
+input[type=number] { -moz-appearance: textfield; }
+label { color: var(--testo2); font-size: 12px; display: block; margin: 8px 0 3px; }
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+.riga { display: flex; gap: 8px; align-items: center; }
+.riga > * { flex: 1; }
+.riga > .fisso { flex: none; }
+.muto { color: var(--testo2); }
+.piccolo { font-size: 12px; }
+.badge { font-size: 11px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--bordo); color: var(--testo2); }
+.badge.ok { color: var(--ok); border-color: #1f5c3a; }
+.badge.warn { color: var(--warn); border-color: #6b4a0e; }
+.card { background: var(--bg2); border: 1px solid var(--bordo); border-radius: var(--raggio); }
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #262b36; border: 1px solid var(--bordo);
+  color: var(--testo); padding: 10px 16px; border-radius: 10px; box-shadow: 0 10px 30px #0008; z-index: 100; max-width: 90vw;
+}
+.toast.err { border-color: var(--err); }
+.toast.ok { border-color: var(--ok); }
+dialog { background: var(--bg2); color: var(--testo); border: 1px solid var(--bordo); border-radius: 14px; padding: 20px; max-width: 520px; width: 92vw; }
+dialog::backdrop { background: #000a; }
+.barra {
+  height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: var(--bg2); border-bottom: 1px solid var(--bordo);
+}
+.barra .logo { font-weight: 700; letter-spacing: .04em; color: #fff; display: flex; align-items: center; gap: 8px; }
+.barra .logo b { color: var(--accento); }
+.barra .spazio { flex: 1; }
+.progress { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.progress > i { display: block; height: 100%; background: var(--accento); width: 0; transition: width .2s; }
+
+.chip-utente { color: var(--testo2); font-size: 12px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

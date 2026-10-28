@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REALITYPAPER — accesso</title>
+<link rel="stylesheet" href="/static/css/rp.css">
+<style>
+  body { display: grid; place-items: center; min-height: 100vh; }
+  .scheda { width: min(420px, 92vw); padding: 28px; }
+  .logo { font-weight: 700; letter-spacing: .04em; font-size: 20px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .logo b { color: var(--accento); }
+  .sotto { color: var(--testo2); margin: 0 0 18px; }
+  .tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 9px; padding: 4px; margin-bottom: 8px; }
+  .tabs button { flex: 1; justify-content: center; border-color: transparent; background: transparent; }
+  .tabs button.attivo { background: var(--bg3); }
+  .avviso { background: #2a2214; border: 1px solid #6b4a0e; color: var(--warn); padding: 8px 10px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; }
+  .errore { color: var(--err); font-size: 13px; min-height: 18px; margin-top: 8px; }
+  form button.primario { width: 100%; justify-content: center; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="card scheda">
+  <div class="logo"><span id="logo-ic"></span>REALITY<b>PAPER</b></div>
+  <p class="sotto">Contenuti 3D e AR sopra la carta stampata.</p>
+  <div class="tabs"><button id="tab-accedi" class="attivo">Accedi</button><button id="tab-registra">Registrati</button></div>
+  <div id="avviso" class="avviso" hidden>Primo avvio: l'account che crei ora sarà l'amministratore della piattaforma.</div>
+  <form id="form">
+    <div id="campo-nome" hidden><label>Nome</label><input id="nome" autocomplete="name" placeholder="Il tuo nome o studio"></div>
+    <label>Email</label><input id="email" type="email" autocomplete="username" required>
+    <label>Password</label><input id="password" type="password" autocomplete="current-password" required minlength="6">
+    <div class="errore" id="errore"></div>
+    <button class="primario" id="invia">Accedi</button>
+  </form>
+</div>
+<script type="module">
+  import { ic } from '/static/js/icone.js';
+  import { $, utenteCorrente } from '/static/js/comune.js';
+  $('#logo-ic').innerHTML = ic('cubo3d');
+  const params = new URLSearchParams(location.search);
+  const torna = params.get('torna') || '/';
+  let modo = params.get('registrazione') === '1' ? 'registra' : 'accedi';
+  const me = await utenteCorrente();
+  if (me.utente) location.href = torna;
+  if (me.primoAvvio) { modo = 'registra'; $('#avviso').hidden = false; $('#tab-accedi').disabled = true; }
+  function aggiorna() {
+    $('#tab-accedi').classList.toggle('attivo', modo === 'accedi');
+    $('#tab-registra').classList.toggle('attivo', modo === 'registra');
+    $('#campo-nome').hidden = modo !== 'registra';
+    $('#invia').textContent = modo === 'registra' ? 'Crea account' : 'Accedi';
+    $('#password').autocomplete = modo === 'registra' ? 'new-password' : 'current-password';
+  }
+  $('#tab-accedi').onclick = () => { modo = 'accedi'; aggiorna(); };
+  $('#tab-registra').onclick = () => { modo = 'registra'; aggiorna(); };
+  aggiorna();
+  $('#form').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('#errore').textContent = ''; $('#invia').disabled = true;
+    try {
+      const r = await fetch(`/api/auth/${modo === 'registra' ? 'registrazione' : 'login'}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: $('#email').value, password: $('#password').value, nome: $('#nome').value }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.errore || 'Errore');
+      location.href = torna;
+    } catch (err) { $('#errore').textContent = err.message; $('#invia').disabled = false; }
+  });
+</script>
+</body>
+</html>
