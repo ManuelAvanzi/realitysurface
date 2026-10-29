@@ -1,4 +1,4 @@
-# REALITYPAPER v0.3 — AR sopra la carta stampata
+# REALITYSURFACE v0.3 — AR sopra la carta stampata
 
 Piattaforma web (editor + viewer) per far comparire contenuti 3D sopra pagine stampate: libri,
 biglietti da visita, brochure, copertine. Nessuna app da installare: si scansiona il QR e si
@@ -18,7 +18,7 @@ Il template imposta formato e crea le pagine iniziali vuote: nel passo Pagine tr
 assegnate in ordine. Ogni template ha i suoi consigli di stampa e di tracciamento, mostrati nel passo Pagine.
 
 ## Plastico
-Il plastico lo costruisci con i tuoi strumenti (stampa 3D, Blender, cartone): REALITYPAPER non lo modella.
+Il plastico lo costruisci con i tuoi strumenti (stampa 3D, Blender, cartone): REALITYSURFACE non lo modella.
 Il flusso è:
 1. **Carica il GLB** del plastico nel passo Pagine (blocco "Modello del plastico"). Serve come riferimento
    nell'editor (in trasparenza) e come occlusore nel viewer AR: i personaggi spariscono dietro gli edifici veri.

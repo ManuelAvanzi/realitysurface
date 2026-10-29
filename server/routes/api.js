@@ -1,4 +1,4 @@
-// API REST di REALITYPAPER: stampati, pagine, asset, target, QR. Tutto protetto da login tranne config e viewer.
+// API REST di REALITYSURFACE: stampati, pagine, asset, target, QR. Tutto protetto da login tranne config e viewer.
 import express from 'express';
 import multer from 'multer';
 import fs from 'node:fs';

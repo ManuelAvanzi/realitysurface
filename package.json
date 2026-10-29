@@ -1,7 +1,7 @@
 {
-  "name": "realitypaper",
+  "name": "realitysurface",
   "version": "0.1.0",
-  "description": "REALITYPAPER - editor e viewer AR sopra la carta stampata (libri, biglietti, brochure) con QR",
+  "description": "REALITYSURFACE - editor e viewer AR sopra la carta stampata (libri, biglietti, brochure) con QR",
   "private": true,
   "type": "module",
   "main": "server/index.js",

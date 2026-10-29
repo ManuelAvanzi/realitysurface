@@ -103,7 +103,7 @@ async function basamento(canvas, qrPng, w = 1684, h = 1190) {
   ctx.strokeStyle = '#1e1a16'; ctx.lineWidth = 16; ctx.strokeRect(8, 8, w - 16, h - 16);
   ctx.fillStyle = '#1e1a16cc'; ctx.fillRect(40, 40, 560, 120);
   ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = 'bold 56px sans-serif'; ctx.fillText('BORGO DI SAN PIETRO', 60, 100);
-  ctx.font = '26px sans-serif'; ctx.fillStyle = '#ffb36b'; ctx.fillText('Plastico interattivo · scala 1:1000 · demo REALITYPAPER', 60, 140);
+  ctx.font = '26px sans-serif'; ctx.fillStyle = '#ffb36b'; ctx.fillText('Plastico interattivo · scala 1:1000 · demo REALITYSURFACE', 60, 140);
   ctx.save(); ctx.translate(w - 110, 120); ctx.fillStyle = '#1e1a16cc'; ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0, -48); ctx.lineTo(14, 10); ctx.lineTo(0, 0); ctx.lineTo(-14, 10); ctx.fill();
   ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('N', 0, 40); ctx.restore();

@@ -1,4 +1,4 @@
-// Database SQLite: schema di REALITYPAPER (utenti, sessioni, stampati, pagine, asset, scansioni).
+// Database SQLite: schema di REALITYSURFACE (utenti, sessioni, stampati, pagine, asset, scansioni).
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,7 +8,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.join(here, '..');
 export const DATA_DIR = path.join(ROOT, 'data');
 export const UPLOADS_DIR = path.join(ROOT, 'uploads');
-const DB_PATH = path.join(DATA_DIR, 'realitypaper.db');
+const DB_PATH = path.join(DATA_DIR, 'realitysurface.db');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });

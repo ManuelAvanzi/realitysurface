@@ -1,4 +1,9 @@
-# REALITYPAPER — AR sopra la carta stampata
+# REALITYSURFACE — AR sopra la carta stampata
+
+Nome del progetto: REALITYSURFACE (prima REALITYPAPER; rinominato il 29/10/2026 quando e' nato il repo GitHub
+ManuelAvanzi/realitysurface). La CARTELLA su disco si chiama ancora `TROVAZAMPA\REALITYPAPER`: Windows non l'ha lasciata
+rinominare mentre la sessione la teneva aperta. Quando la si rinomina in REALITYSURFACE, aggiornare il percorso in
+`TROVAZAMPA\.claude\launch.json` (voce `realitysurface`, porta 5500).
 
 Progetto AUTONOMO (cartella propria, repo proprio, nessun legame con il portale Cucina UNESCO
 nella cartella padre). Lingua di lavoro: italiano. Porta di sviluppo riservata: **5500**.
@@ -53,9 +58,9 @@ fuori scopo della v1.
 ## Architettura
 
 ```
-REALITYPAPER/
+REALITYSURFACE/
   server/index.js      Node + Express (porta 5500): /vendor/* da node_modules, /static, /uploads, cookie-parser
-  server/db.js         SQLite data/realitypaper.db: utenti, sessioni, stampati (utente_id, pubblicato, template, impostazioni JSON), pagine (qr_id, immagine,
+  server/db.js         SQLite data/realitysurface.db: utenti, sessioni, stampati (utente_id, pubblicato, template, impostazioni JSON), pagine (qr_id, immagine,
                        qualita 0-100, target .mind, target_hash, scena JSON), asset, scansioni; migrazioni con aggiungiColonna()
   server/template.js   CATALOGO TEMPLATE (biglietto 85x55, brochure 6 ante 99x210, libro A4, poster A3, plastico A3 oriz., libero):
                        formato, pagine iniziali vuote, consigli, scalaContenuti, flag plastico

@@ -1,4 +1,4 @@
-/* Editor REALITYPAPER: shell a passi + editor 3D */
+/* Editor REALITYSURFACE: shell a passi + editor 3D */
 body { overflow: hidden; }
 .app { display: grid; grid-template-rows: 52px 1fr; grid-template-columns: minmax(0, 1fr); height: 100vh; } /* minmax(0,1fr): la barra larga non deve allargare i passi */
 .app > .barra { min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }

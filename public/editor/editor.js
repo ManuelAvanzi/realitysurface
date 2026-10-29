@@ -1,4 +1,4 @@
-// Editor REALITYPAPER — shell a passi: Pagine → Target → Contenuti → Pubblica.
+// Editor REALITYSURFACE — shell a passi: Pagine → Target → Contenuti → Pubblica.
 import { ic } from '../js/icone.js';
 import { $, $$, api, esc, toast, richiediUtente, chipUtente, TIPI_ETICHETTA } from '../js/comune.js';
 import { initPagine } from './pagine.js';

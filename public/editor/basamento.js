@@ -94,7 +94,7 @@ export async function generaBasamento(o) {
   ctx.strokeStyle = '#2b2118'; ctx.lineWidth = 18; ctx.strokeRect(9, 9, W - 18, H - 18);
   ctx.fillStyle = '#2b2118dd'; ctx.fillRect(40, 40, Math.min(760, W - 400), 118);
   ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic'; ctx.font = 'bold 54px sans-serif'; ctx.fillText(String(o.titolo || 'Plastico').toUpperCase().slice(0, 28), 62, 102);
-  ctx.font = '26px sans-serif'; ctx.fillStyle = '#ffb36b'; ctx.fillText('Basamento REALITYPAPER · appoggia il modello sulla sua impronta', 62, 140);
+  ctx.font = '26px sans-serif'; ctx.fillStyle = '#ffb36b'; ctx.fillText('Basamento REALITYSURFACE · appoggia il modello sulla sua impronta', 62, 140);
   ctx.save(); ctx.translate(W - 110, 120); ctx.fillStyle = '#2b2118dd'; ctx.beginPath(); ctx.arc(0, 0, 58, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0, -46); ctx.lineTo(13, 10); ctx.lineTo(0, 0); ctx.lineTo(-13, 10); ctx.fill();
   ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('N', 0, 40); ctx.restore();

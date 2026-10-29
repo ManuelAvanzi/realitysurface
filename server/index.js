@@ -1,4 +1,4 @@
-// REALITYPAPER — server principale (API, account, upload, QR, redirect, viewer).
+// REALITYSURFACE — server principale (API, account, upload, QR, redirect, viewer).
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'node:path';
@@ -38,6 +38,6 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`REALITYPAPER su http://localhost:${PORT}  (editor: /editor/  viewer: /v/<slug>/<pagina>)`);
+  console.log(`REALITYSURFACE su http://localhost:${PORT}  (editor: /editor/  viewer: /v/<slug>/<pagina>)`);
   if (process.env.PUBLIC_URL) console.log(`URL pubblico per i QR: ${process.env.PUBLIC_URL}`);
 });

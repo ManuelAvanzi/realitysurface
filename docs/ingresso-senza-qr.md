@@ -1,6 +1,6 @@
 # Entrare nell'esperienza senza QR — indagine (28/10/2026)
 
-Il QR in REALITYPAPER è solo la **porta d'ingresso** (apre il link); il tracking lo fa l'immagine.
+Il QR in REALITYSURFACE è solo la **porta d'ingresso** (apre il link); il tracking lo fa l'immagine.
 Quindi la domanda "c'è di meglio del QR?" riguarda solo come si arriva al link giusto.
 
 ## Le alternative, valutate

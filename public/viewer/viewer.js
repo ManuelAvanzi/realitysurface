@@ -1,4 +1,4 @@
-// Viewer REALITYPAPER: MindAR (image tracking) con fallback 3D senza camera.
+// Viewer REALITYSURFACE: MindAR (image tracking) con fallback 3D senza camera.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ic } from '../js/icone.js';

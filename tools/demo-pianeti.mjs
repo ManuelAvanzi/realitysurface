@@ -182,7 +182,7 @@ async function paginaStampabile(canvas, p, tex, qrPng, numero, w = 1200, h = 160
   ctx.fillText('Inquadra il QR: il pianeta', qx + qs / 2, qy + qs + 28);
   ctx.fillText('esce dalla pagina', qx + qs / 2, qy + qs + 60);
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#5b6474'; ctx.font = '26px sans-serif'; ctx.fillText(`${numero}  ·  IL LIBRO DEI PIANETI  ·  demo REALITYPAPER`, 90, h - 60);
+  ctx.fillStyle = '#5b6474'; ctx.font = '26px sans-serif'; ctx.fillText(`${numero}  ·  IL LIBRO DEI PIANETI  ·  demo REALITYSURFACE`, 90, h - 60);
   return c;
 }
 
