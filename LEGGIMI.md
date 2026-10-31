@@ -75,6 +75,11 @@ Poi avvia il server con `PUBLIC_URL` uguale all'indirizzo del tunnel, così i QR
 (in PowerShell: `$env:PUBLIC_URL="https://xxx.trycloudflare.com"; npm start`). Il passo
 Pubblica avvisa se l'indirizzo pubblico è ancora localhost.
 
+## Metterlo online
+Per un link stabile in https (telefono incluso) c'è `docs/deploy.md`: `Dockerfile` + `fly.toml` pronti per
+Fly.io (o Render/Railway/VPS), dati su disco persistente (`DATA_DIR`, `UPLOADS_DIR`) e registrazione su
+invito (`CODICE_INVITO`) dopo il primo account.
+
 ## Limiti attuali
 - Un target per pagina (un QR per pagina). Il QR unico per tutto il libro arriva nella v0.3.
 - Audio e video come elementi: v0.3.

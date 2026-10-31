@@ -7,6 +7,7 @@ import { db } from './db.js';
 export const auth = express.Router();
 const COOKIE = 'rp_sessione';
 const GIORNI = 30;
+const CODICE_INVITO = (process.env.CODICE_INVITO || '').trim();
 
 export function utenteDaRichiesta(req) {
   const sid = req.cookies?.[COOKIE];
@@ -38,6 +39,10 @@ auth.post('/registrazione', async (req, res) => {
   if (String(password).length < 6) return res.status(400).json({ errore: 'Password di almeno 6 caratteri' });
   if (db.prepare('SELECT 1 FROM utenti WHERE email = ?').get(e)) return res.status(409).json({ errore: 'Email già registrata' });
   const primo = !db.prepare('SELECT 1 FROM utenti LIMIT 1').get();
+  // Istanza pubblica: dopo l'amministratore, ci si registra solo con il codice d'invito (CODICE_INVITO).
+  if (!primo && CODICE_INVITO && String(req.body?.invito || '').trim() !== CODICE_INVITO) {
+    return res.status(403).json({ errore: "Codice d'invito mancante o errato" });
+  }
   const info = db.prepare('INSERT INTO utenti (email, password_hash, nome, ruolo) VALUES (?, ?, ?, ?)')
     .run(e, await bcrypt.hash(String(password), 10), String(nome).trim().slice(0, 80), primo ? 'admin' : 'creatore');
   const u = db.prepare('SELECT * FROM utenti WHERE id = ?').get(info.lastInsertRowid);
@@ -65,5 +70,5 @@ auth.post('/logout', (req, res) => {
 auth.get('/me', (req, res) => {
   const u = utenteDaRichiesta(req);
   const nUtenti = db.prepare('SELECT COUNT(*) AS n FROM utenti').get().n;
-  res.json({ utente: u, primoAvvio: nUtenti === 0 });
+  res.json({ utente: u, primoAvvio: nUtenti === 0, invitoRichiesto: nUtenti > 0 && !!CODICE_INVITO });
 });

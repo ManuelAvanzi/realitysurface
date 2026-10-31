@@ -154,6 +154,14 @@ tracking) → `AR Quick Look` (iPhone, USDZ generato dal GLB) → `3D viewer non
 - Nessun framework front-end; moduli ES vanilla.
 - Icone SVG a tratto, MAI emoji (vedi feedback design UI).
 
+## Deploy (31/10/2026)
+`Dockerfile` (node:20-bookworm-slim + lib runtime per canvas), `.dockerignore`, `fly.toml` (app realitysurface,
+regione ams, volume `dati` su /data, auto-stop) e `render.yaml`. Env: `DATA_DIR`, `UPLOADS_DIR` (db.js, default
+locali invariati), `CODICE_INVITO` (auth.js: dopo il primo utente la registrazione richiede il codice; /api/auth/me
+espone `invitoRichiesto` e login.html mostra il campo). PUBLIC_URL resta facoltativo (fallback host richiesta).
+Guida passo-passo in docs/deploy.md. Collaudato in locale con PORT/DATA_DIR/CODICE_INVITO (health, admin senza
+invito, secondo utente 403/201, demo pianeti su DATA_DIR). Docker e flyctl NON installati su questo PC.
+
 ## Roadmap
 
 - v0.1 FATTA: server + editor + viewer MindAR + QR + demo "Pianeti".

@@ -6,8 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.join(here, '..');
-export const DATA_DIR = path.join(ROOT, 'data');
-export const UPLOADS_DIR = path.join(ROOT, 'uploads');
+// In hosting: DATA_DIR e UPLOADS_DIR puntano a un disco persistente (es. /data e /data/uploads).
+export const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(ROOT, 'data'));
+export const UPLOADS_DIR = path.resolve(process.env.UPLOADS_DIR || (process.env.DATA_DIR ? path.join(DATA_DIR, 'uploads') : path.join(ROOT, 'uploads')));
 const DB_PATH = path.join(DATA_DIR, 'realitysurface.db');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });

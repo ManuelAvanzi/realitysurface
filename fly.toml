@@ -1,0 +1,36 @@
+# Fly.io — `fly launch --copy-config --no-deploy` poi `fly volumes create dati --size 1` e `fly deploy`.
+# Cambia "app" se il nome è già preso. Regione ams = Amsterdam (la più vicina all'Italia).
+app = "realitysurface"
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  DATA_DIR = "/data"
+  UPLOADS_DIR = "/data/uploads"
+  # PUBLIC_URL non serve: senza, i QR usano l'host della richiesta (https://realitysurface.fly.dev).
+  # CODICE_INVITO va impostato come segreto: fly secrets set CODICE_INVITO=...
+
+[[mounts]]
+  source = "dati"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "15s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
