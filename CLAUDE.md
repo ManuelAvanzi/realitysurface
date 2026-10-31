@@ -159,7 +159,9 @@ tracking) → `AR Quick Look` (iPhone, USDZ generato dal GLB) → `3D viewer non
 regione ams, volume `dati` su /data, auto-stop) e `render.yaml`. Env: `DATA_DIR`, `UPLOADS_DIR` (db.js, default
 locali invariati), `CODICE_INVITO` (auth.js: dopo il primo utente la registrazione richiede il codice; /api/auth/me
 espone `invitoRichiesto` e login.html mostra il campo). PUBLIC_URL resta facoltativo (fallback host richiesta).
-Guida passo-passo in docs/deploy.md. Collaudato in locale con PORT/DATA_DIR/CODICE_INVITO (health, admin senza
+ONLINE dal 31/10 sera: https://realitysurface.fly.dev (app `realitysurface`, org personal, ams, volume `dati`, 1 macchina
+shared-cpu-1x 512 MB auto-stop; flyctl via winget in %LOCALAPPDATA%\Microsoft\WinGet\Links; codice d'invito in .env.fly).
+Aggiornare con `flyctl deploy --ha=false --remote-only`. Guida passo-passo in docs/deploy.md. Collaudato in locale con PORT/DATA_DIR/CODICE_INVITO (health, admin senza
 invito, secondo utente 403/201, demo pianeti su DATA_DIR). Docker e flyctl NON installati su questo PC.
 
 ## Roadmap
