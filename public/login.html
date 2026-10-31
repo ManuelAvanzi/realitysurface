@@ -38,7 +38,7 @@
   import { $, utenteCorrente } from '/static/js/comune.js';
   $('#logo-ic').innerHTML = ic('cubo3d');
   const params = new URLSearchParams(location.search);
-  const torna = params.get('torna') || '/';
+  const torna = params.get('torna') || '/stampati';
   let modo = params.get('registrazione') === '1' ? 'registra' : 'accedi';
   const me = await utenteCorrente();
   if (me.utente) location.href = torna;

@@ -68,7 +68,8 @@ REALITYSURFACE/
   server/routes/api.js tutto dietro richiediLogin tranne /config e /viewer/:slug (pubblico solo se pubblicato, o proprietario);
                        CRUD stampati/pagine/asset, POST /stampati con template (crea pagine vuote), PUT /stampati/:id/ordine e /impostazioni,
                        upload (multer), target, qr.png|svg, /demo/pianeti, /demo/plastico; /config espone il catalogo template
-  server/routes/public.js  / portale, /login, /editor/, /v/:slug/:n viewer, /q/:qr redirect+log, /stampa/:id foglio QR (proprietario)
+  server/routes/public.js  / LANDING pubblica, /stampati dashboard, /login, /editor/, /v/:slug/:n viewer, /q/:qr redirect+log,
+                       /stampa/:id foglio QR (proprietario), /cattura/:token pagina telefono
   public/js/comune.js  api(), toast, richiediUtente() (-> /login), chipUtente, qualitaImmagine() (Sobel + copertura griglia 4x4)
   public/js/scena.js   MODULO CONDIVISO editor/viewer: JSON scena -> three.js (glb+clip, sfera, testo, immagine, personaggio procedurale,
                        blocco); anim rotazione/fluttua/orbita/PERCORSO (punti, velocita, loop, orienta, offsetRot); animaElemento();
@@ -78,7 +79,10 @@ REALITYSURFACE/
   public/editor/basamento.js  generaBasamento(): vista dall'alto ortografica del GLB (three.js offscreen, colori per quota, spigoli) su tavola
                        decorata (griglia, punti, anelli, cornice, titolo, bussola, QR) -> PNG = immagine/target della pagina Basamento
   public/js/three-shim.js  "three" dell'importmap = three.module.js + sRGBEncoding (MindAR lo importa ancora)
-  public/login.html    accesso/registrazione (al primo avvio forza la registrazione dell'admin)
+  public/landing.html + public/js/landing.js  LANDING (31/10/2026): hero con immagine AI, 4 passi, 4 casi d'uso con immagini AI
+                       (public/img/*.jpg generate con ComfyUI FLUX.2 klein 4B in locale), vantaggi, CTA; se loggato i bottoni portano a /stampati
+  public/index.html + public/js/home.js  DASHBOARD "I tuoi stampati" (ora su /stampati; il logo porta alla landing)
+  public/login.html    accesso/registrazione (al primo avvio forza la registrazione dell'admin); torna=/stampati di default
   public/editor/editor.js   SHELL A PASSI (?passo=pagine|target|contenuti|pubblica, ?p=<pagina>): ctx condiviso, stepper con stato
   public/editor/pagine.js   passo 1: consigli del template, blocco PLASTICO (carica GLB -> impostazioni.riferimento, ingombro, rotazione,
                        "Genera basamento dal modello"), drag&drop multiplo (riempie prima le pagine vuote), titoli, ordine, sostituisci/carica

@@ -8,7 +8,7 @@ import { initPubblica } from './pubblica.js';
 
 const params = new URLSearchParams(location.search);
 const ID = Number(params.get('s'));
-if (!ID) location.href = '/';
+if (!ID) location.href = '/stampati';
 
 const PASSI = [
   { id: 'pagine', nome: 'Pagine' },
@@ -69,7 +69,7 @@ chipUtente($('#utente'), ctx.utente);
 $('#btn-home').innerHTML = ic('indietro');
 $('#btn-salva').innerHTML = `${ic('salva')} Salva`;
 ctx.config = await api('/api/config');
-try { await ctx.ricarica(); } catch (e) { toast(e.message, 'err'); setTimeout(() => (location.href = '/'), 1500); throw e; }
+try { await ctx.ricarica(); } catch (e) { toast(e.message, 'err'); setTimeout(() => (location.href = '/stampati'), 1500); throw e; }
 $('#titolo-stampato').value = ctx.stampato.titolo;
 $('#titolo-stampato').addEventListener('change', async (e) => {
   const s = await api(`/api/stampati/${ID}`, { method: 'PUT', body: JSON.stringify({ titolo: e.target.value }) });

@@ -9,7 +9,8 @@ const PUB = path.join(ROOT, 'public');
 const pagina = (f) => (req, res) => res.sendFile(path.join(PUB, f));
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-publicRouter.get(['/', '/index.html'], pagina('index.html'));
+publicRouter.get(['/', '/index.html'], pagina('landing.html'));      // landing pubblica
+publicRouter.get(['/stampati', '/stampati/'], pagina('index.html'));  // dashboard (richiede login lato client)
 publicRouter.get(['/login', '/login/'], pagina('login.html'));
 publicRouter.get(['/editor', '/editor/'], pagina('editor/index.html'));
 publicRouter.get(['/v/:slug', '/v/:slug/:n'], pagina('viewer/index.html'));
