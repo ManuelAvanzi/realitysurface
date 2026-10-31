@@ -15,6 +15,11 @@ Cosa prevede già il codice:
   quel codice. Consigliato su un'istanza pubblica di prova.
 - `/health` per i controlli dell'hosting.
 
+## Istanza attiva (31/10/2026)
+App Fly `realitysurface` (org personal, regione ams, volume `dati` 1 GB): **https://realitysurface.fly.dev**.
+Il codice d'invito è nel file locale `.env.fly` (ignorato da git). Aggiornare dopo un push:
+`flyctl deploy --ha=false --remote-only` dalla cartella del progetto (flyctl installato con winget).
+
 ## Percorso consigliato: Fly.io (Amsterdam)
 
 Costo indicativo: una macchina `shared-cpu-1x` da 512 MB con volume da 1 GB, che si spegne da sola
